@@ -112,6 +112,9 @@ class Report_Command {
 	 * [--grouped]
 	 * : Display report in grouped format.
 	 *
+	 * [--open]
+	 * : Open report in default browser.
+	 *
 	 * [--porcelain]
 	 * : Output just the report file path.
 	 *
@@ -146,10 +149,12 @@ class Report_Command {
 			'fields' => 'file,line,column,type,code,message,docs',
 		];
 
-		$porcelain_mode = Utils\get_flag_value( $assoc_args, 'porcelain', false );
-		$grouped_mode   = Utils\get_flag_value( $assoc_args, 'grouped', false );
+		$porcelain_mode  = Utils\get_flag_value( $assoc_args, 'porcelain', false );
+		$grouped_mode    = Utils\get_flag_value( $assoc_args, 'grouped', false );
+		$open_in_browser = Utils\get_flag_value( $assoc_args, 'open', false );
 		unset( $assoc_args['porcelain'] );
 		unset( $assoc_args['grouped'] );
+		unset( $assoc_args['open'] );
 
 		$check_args = array_merge( $assoc_args, $check_args );
 
@@ -205,6 +210,10 @@ class Report_Command {
 		if ( true === $porcelain_mode ) {
 			WP_CLI::line( $report_file );
 			return;
+		}
+
+		if ( true === $open_in_browser ) {
+			$this->open_in_browser( $report_file );
 		}
 
 		WP_CLI::log( 'Report file: ' . $report_file );
@@ -308,5 +317,27 @@ class Report_Command {
 	 */
 	private function get_html_content( array $data, string $type = 'default' ): string {
 		return Utils\mustache_render( "{$this->templates_folder}/{$type}.mustache", $data );
+	}
+
+	/**
+	 * Opens URL in default browser.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $url URL.
+	 */
+	public static function open_in_browser( $url ) {
+		switch ( strtoupper( substr( PHP_OS, 0, 3 ) ) ) {
+			case 'DAR':
+				$exec = 'open';
+				break;
+			case 'WIN':
+				$exec = 'start ""';
+				break;
+			default:
+				$exec = 'xdg-open';
+		}
+
+		passthru( $exec . ' ' . escapeshellarg( $url ) );
 	}
 }

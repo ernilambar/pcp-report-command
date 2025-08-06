@@ -7,6 +7,7 @@
 
 namespace Nilambar\PCP_Report_Command;
 
+use JsonSchema\Validator;
 use WP_CLI;
 use WP_CLI\Utils;
 
@@ -18,6 +19,24 @@ use WP_CLI\Utils;
  * @since 1.0.0
  */
 class Report_Command {
+
+	/**
+	 * JSON Schema validator instance.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var Validator|null
+	 */
+	private $validator = null;
+
+	/**
+	 * Constructor.
+	 *
+	 * @since 1.0.0
+	 */
+	public function __construct() {
+		$this->validator = new Validator();
+	}
 
 	/**
 	 * Generates HTML report for "plugin check" command.
@@ -191,49 +210,62 @@ class Report_Command {
 			if ( json_last_error() === JSON_ERROR_NONE ) {
 				$validation_result = $this->validate_json_schema( $groups, $schema );
 				if ( ! $validation_result['valid'] ) {
+					// Log validation error but don't fail completely - use existing data.
 					error_log( 'Groups configuration validation failed: ' . $validation_result['error'] );
-					return [];
+					// Continue with existing data even if validation fails.
 				}
 			}
 		}
 
-		// Flatten the hierarchical structure for backward compatibility.
-		$flattened_groups = [];
+		// Process groups and their children.
+		$processed_groups = [];
 
 		foreach ( $groups as $group_id => $group_data ) {
+			// Skip the $schema property.
+			if ( '$schema' === $group_id ) {
+				continue;
+			}
+
+			// Skip non-array group data.
+			if ( ! is_array( $group_data ) ) {
+				continue;
+			}
+
 			// Add parent group.
-			$flattened_groups[ $group_id ] = [
-				'id'    => $group_data['id'],
-				'title' => $group_data['title'],
+			$processed_groups[ $group_id ] = [
+				'id'    => $group_data['id'] ?? '',
+				'title' => $group_data['title'] ?? '',
 			];
 
 			// Add child groups if they exist.
-			if ( isset( $group_data['children'] ) ) {
+			if ( isset( $group_data['children'] ) && is_array( $group_data['children'] ) ) {
 				foreach ( $group_data['children'] as $child_id => $child_data ) {
-					$flattened_groups[ $child_id ] = [
-						'id'     => $child_data['id'],
-						'title'  => $child_data['title'],
-						'type'   => $child_data['type'],
-						'parent' => $child_data['parent'],
-						'checks' => $child_data['checks'],
-					];
+					if ( is_array( $child_data ) ) {
+						$processed_groups[ $child_id ] = [
+							'id'     => $child_data['id'] ?? '',
+							'title'  => $child_data['title'] ?? '',
+							'type'   => $child_data['type'] ?? '',
+							'parent' => $child_data['parent'] ?? '',
+							'checks' => $child_data['checks'] ?? [],
+						];
+					}
 				}
 			} else {
 				// Direct group without children.
 				if ( isset( $group_data['type'] ) ) {
-					$flattened_groups[ $group_id ]['type'] = $group_data['type'];
+					$processed_groups[ $group_id ]['type'] = $group_data['type'];
 				}
 				if ( isset( $group_data['checks'] ) ) {
-					$flattened_groups[ $group_id ]['checks'] = $group_data['checks'];
+					$processed_groups[ $group_id ]['checks'] = $group_data['checks'];
 				}
 			}
 		}
 
-		return $flattened_groups;
+		return $processed_groups;
 	}
 
 	/**
-	 * Validates JSON data against a JSON schema.
+	 * Validates JSON data against a JSON schema using jsonrainbow/json-schema library.
 	 *
 	 * @since 1.0.0
 	 *
@@ -242,96 +274,54 @@ class Report_Command {
 	 * @return array Validation result with 'valid' boolean and 'error' string.
 	 */
 	private function validate_json_schema( array $data, array $schema ): array {
-		$errors = [];
+		try {
+			// Convert data and schema to objects for jsonrainbow/json-schema.
+			$data_object   = json_decode( json_encode( $data ) );
+			$schema_object = json_decode( json_encode( $schema ) );
 
-		// Check if data is an object.
-		if ( ! is_array( $data ) ) {
+			// Validate data against schema.
+			$this->validator->validate( $data_object, $schema_object );
+
+			if ( $this->validator->isValid() ) {
+				return [
+					'valid' => true,
+					'error' => '',
+				];
+			}
+
+			// Collect validation errors.
+			$errors           = [];
+			$validator_errors = $this->validator->getErrors();
+
+			if ( is_array( $validator_errors ) ) {
+				foreach ( $validator_errors as $error ) {
+					if ( is_array( $error ) ) {
+						$property = $error['property'] ?? '';
+						$message  = $error['message'] ?? '';
+					} else {
+						$property = '';
+						$message  = (string) $error;
+					}
+
+					if ( ! empty( $property ) ) {
+						$errors[] = "{$property}: {$message}";
+					} else {
+						$errors[] = $message;
+					}
+				}
+			}
+
 			return [
 				'valid' => false,
-				'error' => 'Data must be an object',
+				'error' => implode( '; ', $errors ),
+			];
+
+		} catch ( \Exception $e ) {
+			return [
+				'valid' => false,
+				'error' => 'Schema validation error: ' . $e->getMessage(),
 			];
 		}
-
-		// Check pattern properties for group keys.
-		foreach ( $data as $key => $value ) {
-			if ( ! preg_match( '/^[a-z_]+$/', $key ) ) {
-				$errors[] = "Invalid group key: {$key} (must match pattern ^[a-z_]+$)";
-			}
-
-			if ( ! is_array( $value ) ) {
-				$errors[] = "Group {$key} must be an object";
-				continue;
-			}
-
-			// Check required properties.
-			if ( ! isset( $value['id'] ) || ! isset( $value['title'] ) ) {
-				$errors[] = "Group {$key} must have 'id' and 'title' properties";
-				continue;
-			}
-
-			// Check if it's a parent group (has children) or leaf group (has type and checks).
-			$has_children = isset( $value['children'] );
-			$has_checks   = isset( $value['type'] ) && isset( $value['checks'] );
-
-			if ( $has_children && $has_checks ) {
-				$errors[] = "Group {$key} cannot have both 'children' and 'type'/'checks' properties";
-			} elseif ( ! $has_children && ! $has_checks ) {
-				$errors[] = "Group {$key} must have either 'children' or 'type'/'checks' properties";
-			}
-
-			// Validate children if present.
-			if ( $has_children ) {
-				foreach ( $value['children'] as $child_key => $child_value ) {
-					if ( ! preg_match( '/^[a-z_]+$/', $child_key ) ) {
-						$errors[] = "Invalid child group key: {$child_key} in group {$key}";
-					}
-
-					if ( ! is_array( $child_value ) ) {
-						$errors[] = "Child group {$child_key} in group {$key} must be an object";
-						continue;
-					}
-
-					$required_child_props = [ 'id', 'title', 'type', 'parent', 'checks' ];
-					foreach ( $required_child_props as $prop ) {
-						if ( ! isset( $child_value[ $prop ] ) ) {
-							$errors[] = "Child group {$child_key} in group {$key} must have '{$prop}' property";
-						}
-					}
-
-					// Validate type enum.
-					if ( isset( $child_value['type'] ) && ! in_array( $child_value['type'], [ 'prefix', 'contains' ], true ) ) {
-						$errors[] = "Child group {$child_key} in group {$key} has invalid type: {$child_value['type']}";
-					}
-
-					// Validate checks array.
-					if ( isset( $child_value['checks'] ) ) {
-						if ( ! is_array( $child_value['checks'] ) ) {
-							$errors[] = "Child group {$child_key} in group {$key} 'checks' must be an array";
-						} elseif ( empty( $child_value['checks'] ) ) {
-							$errors[] = "Child group {$child_key} in group {$key} 'checks' array cannot be empty";
-						}
-					}
-				}
-			}
-
-			// Validate leaf group properties.
-			if ( $has_checks ) {
-				if ( ! in_array( $value['type'], [ 'prefix', 'contains' ], true ) ) {
-					$errors[] = "Group {$key} has invalid type: {$value['type']}";
-				}
-
-				if ( ! is_array( $value['checks'] ) ) {
-					$errors[] = "Group {$key} 'checks' must be an array";
-				} elseif ( empty( $value['checks'] ) ) {
-					$errors[] = "Group {$key} 'checks' array cannot be empty";
-				}
-			}
-		}
-
-		return [
-			'valid' => empty( $errors ),
-			'error' => empty( $errors ) ? '' : implode( '; ', $errors ),
-		];
 	}
 
 	/**

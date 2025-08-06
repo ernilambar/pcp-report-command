@@ -25,7 +25,7 @@
       "type": {
         "type": "string",
         "enum": ["prefix", "contains"],
-        "description": "Type of matching rule (only for direct groups without children)"
+        "description": "Type of matching rule (optional for parent groups)"
       },
       "checks": {
         "type": "array",
@@ -34,7 +34,7 @@
           "minLength": 1
         },
         "minItems": 1,
-        "description": "Array of strings to match against issue codes (only for direct groups without children)"
+        "description": "Array of strings to match against issue codes (optional for parent groups)"
       },
       "children": {
         "type": "object",
@@ -79,21 +79,7 @@
     },
     "required": ["id", "title"],
     "additionalProperties": false,
-    "oneOf": [
-      {
-        "required": ["children"],
-        "not": {
-          "required": ["type", "checks"]
-        }
-      },
-      {
-        "required": ["type", "checks"],
-        "not": {
-          "required": ["children"]
-        }
-      }
-    ],
-    "description": "A group can either have children (parent group) or direct checks (leaf group), but not both"
+    "description": "A group can have children (parent group) or direct checks (leaf group), or both"
   },
   "minProperties": 1
 }

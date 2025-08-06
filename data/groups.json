@@ -1,0 +1,162 @@
+{
+  "$schema": "./groups-schema.json",
+  "trademark": {
+    "id": "trademark",
+    "title": "Trademarks",
+    "children": {
+      "trademark_prefix": {
+        "id": "trademark_prefix",
+        "title": "Trademarks Prefix",
+        "type": "prefix",
+        "parent": "trademark",
+        "checks": ["trademark_"]
+      },
+      "trademark_contains": {
+        "id": "trademark_contains",
+        "title": "Trademarks Contains",
+        "type": "contains",
+        "parent": "trademark",
+        "checks": ["trademark"]
+      }
+    }
+  },
+  "security": {
+    "id": "security",
+    "title": "Security",
+    "children": {
+      "security_prefix": {
+        "id": "security_prefix",
+        "title": "Security Prefix",
+        "type": "prefix",
+        "parent": "security",
+        "checks": ["WordPress.Security"]
+      },
+      "security_contains": {
+        "id": "security_contains",
+        "title": "Security Contains",
+        "type": "contains",
+        "parent": "security",
+        "checks": [
+          "allow_unfiltered_uploads_detected",
+          "PluginCheck.CodeAnalysis.SettingSanitization",
+          "uninstall_missing_define",
+          "uninstall_missing_constant_check"
+        ]
+      }
+    }
+  },
+  "plugin_readme": {
+    "id": "plugin_readme",
+    "title": "Plugin Readme",
+    "children": {
+      "plugin_readme_contains": {
+        "id": "plugin_readme_contains",
+        "title": "Plugin Readme Contains",
+        "type": "contains",
+        "parent": "plugin_readme",
+        "checks": [
+          "default_readme_text",
+          "no_license",
+          "empty_plugin_name",
+          "invalid_license",
+          "invalid_plugin_name",
+          "invalid_tested_upto_minor",
+          "license_mismatch",
+          "mismatched_plugin_name",
+          "missing_readme_header",
+          "no_plugin_readme",
+          "no_stable_tag",
+          "nonexistent_tested_upto_header",
+          "outdated_tested_upto_header",
+          "stable_tag_mismatch",
+          "trunk_stable_tag",
+          "upgrade_notice_limit"
+        ]
+      },
+      "plugin_readme_prefix": {
+        "id": "plugin_readme_prefix",
+        "title": "Plugin Readme Prefix",
+        "type": "prefix",
+        "parent": "plugin_readme",
+        "checks": ["readme_"]
+      }
+    }
+  },
+  "plugin_header": {
+    "id": "plugin_header",
+    "title": "Plugin Header",
+    "children": {
+      "plugin_header_prefix": {
+        "id": "plugin_header_prefix",
+        "title": "Plugin Header",
+        "type": "prefix",
+        "parent": "plugin_header",
+        "checks": ["plugin_header_"]
+      },
+      "plugin_header_misc": {
+        "id": "plugin_header_misc",
+        "title": "Plugin Header",
+        "type": "contains",
+        "parent": "plugin_header",
+        "checks": ["textdomain_mismatch"]
+      }
+    }
+  },
+  "plugin_updater": {
+    "id": "plugin_updater",
+    "title": "Plugin Updater",
+    "type": "contains",
+    "checks": [
+      "plugin_updater_detected",
+      "update_modification_detected"
+    ]
+  },
+  "files_folders": {
+    "id": "files_folders",
+    "title": "Files and folders",
+    "type": "contains",
+    "checks": [
+      "application_detected",
+      "badly_named_files",
+      "compressed_files",
+      "empty_file",
+      "empty_folder",
+      "empty_pot_file",
+      "extraneous_plugin_assets_file",
+      "hidden_files",
+      "library_core_files",
+      "main_plugin_folder",
+      "phar_files",
+      "unconventional_main_filename",
+      "vcs_present",
+      "zip_filename",
+      "uninstall_faulty_php_file"
+    ]
+  },
+  "i18n": {
+    "id": "i18n",
+    "title": "Internationalization",
+    "children": {
+      "i18n_prefix": {
+        "id": "i18n_prefix",
+        "title": "Internationalization Prefix",
+        "type": "prefix",
+        "parent": "i18n",
+        "checks": ["WordPress.WP.I18n"]
+      },
+      "i18n_contains": {
+        "id": "i18n_contains",
+        "title": "Internationalization Contains",
+        "type": "contains",
+        "parent": "i18n",
+        "checks": [
+          "Language.I18nFunctionParameters",
+          "non_english_text_found",
+          "empty_pot_file",
+          "PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomain",
+          "textdomain_invalid_format"
+        ]
+      }
+    }
+  }
+}

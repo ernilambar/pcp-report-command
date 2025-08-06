@@ -371,7 +371,7 @@ class Group_Utils {
 					$category_data[ $category_id ]['errors'][ $code ] = [
 						'type'    => strtoupper( $normalized_type ),
 						'code'    => esc_html( $code ),
-						'message' => esc_html( $issue['message'] ),
+						'message' => Template_Utils::format_message( $issue['message'] ),
 						'docs'    => $issue['docs'] ?? null,
 						'issues'  => [],
 					];
@@ -382,7 +382,7 @@ class Group_Utils {
 					$category_data[ $category_id ]['warnings'][ $code ] = [
 						'type'    => strtoupper( $normalized_type ),
 						'code'    => esc_html( $code ),
-						'message' => esc_html( $issue['message'] ),
+						'message' => Template_Utils::format_message( $issue['message'] ),
 						'docs'    => $issue['docs'] ?? null,
 						'issues'  => [],
 					];
@@ -441,33 +441,14 @@ class Group_Utils {
 	}
 
 	/**
-	 * Processes issue types to add display flags and limit files shown.
+	 * Processes issue types for template rendering.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @param array $issue_types Array of issue types (errors or warnings).
-	 * @return array Processed issue types with display flags.
+	 * @return array Processed issue types.
 	 */
 	private static function process_issue_types( array $issue_types ): array {
-		$processed_types = array_values( $issue_types );
-		foreach ( $processed_types as &$type ) {
-			$total_files                 = count( $type['issues'] );
-			$is_single                   = $total_files === 1;
-			$type['has_multiple_files']  = ! $is_single;
-			$type['total_files']         = $total_files;
-			$type['has_more_than_three'] = $total_files > self::MAX_DISPLAYED_FILES;
-
-			// Limit displayed files to first MAX_DISPLAYED_FILES if more than MAX_DISPLAYED_FILES.
-			if ( $total_files > self::MAX_DISPLAYED_FILES ) {
-				$type['displayed_issues'] = array_slice( $type['issues'], 0, self::MAX_DISPLAYED_FILES );
-			} else {
-				$type['displayed_issues'] = $type['issues'];
-			}
-
-			foreach ( $type['displayed_issues'] as &$issue ) {
-				$issue['is_single_file'] = $is_single;
-			}
-		}
-		return $processed_types;
+		return array_values( $issue_types );
 	}
 }

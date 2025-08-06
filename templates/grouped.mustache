@@ -8,11 +8,11 @@
 
   {{#types}}
   <strong>{{type}}: {{code}}</strong><br><br>
-  {{message}}<br><br>
+  {{#issues}}{{#is_single_file}}{{file}}{{#has_location}}:{{line}}{{/has_location}} - {{/is_single_file}}{{/issues}}{{message}}<br><br>
 
-  {{#issues}}
+  {{#issues}}{{^is_single_file}}
   <pre><code>{{file}}{{#has_location}}:{{line}}{{/has_location}}</code></pre>
-  {{/issues}}
+  {{/is_single_file}}{{/issues}}
 
   {{#docs}}
   <a href="{{docs}}" target="_blank">Learn more</a><br><br>

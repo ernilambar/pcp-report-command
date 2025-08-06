@@ -349,26 +349,36 @@ class Group_Utils {
 
 			$category_id = self::get_issue_category_id( $code, $all_groups );
 
-			$issue_data = [
-				'type'    => strtoupper( $normalized_type ),
-				'code'    => $code,
-				'message' => $issue['message'],
-				'docs'    => $issue['docs'] ?? null,
-				'issues'  => [
-					[
-						'file'         => $issue['file'],
-						'line'         => $issue['line'],
-						'column'       => $issue['column'],
-						'has_location' => ( $issue['line'] > 0 ),
-					],
-				],
+			$file_data = [
+				'file'         => esc_html( $issue['file'] ),
+				'line'         => $issue['line'],
+				'column'       => $issue['column'],
+				'has_location' => ( $issue['line'] > 0 ),
 			];
 
 			// Add to appropriate type array within the category.
 			if ( 'error' === $normalized_type ) {
-				$category_data[ $category_id ]['errors'][ $code ] = $issue_data;
+				if ( ! isset( $category_data[ $category_id ]['errors'][ $code ] ) ) {
+					$category_data[ $category_id ]['errors'][ $code ] = [
+						'type'    => strtoupper( $normalized_type ),
+						'code'    => esc_html( $code ),
+						'message' => esc_html( $issue['message'] ),
+						'docs'    => $issue['docs'] ?? null,
+						'issues'  => [],
+					];
+				}
+				$category_data[ $category_id ]['errors'][ $code ]['issues'][] = $file_data;
 			} elseif ( 'warning' === $normalized_type ) {
-				$category_data[ $category_id ]['warnings'][ $code ] = $issue_data;
+				if ( ! isset( $category_data[ $category_id ]['warnings'][ $code ] ) ) {
+					$category_data[ $category_id ]['warnings'][ $code ] = [
+						'type'    => strtoupper( $normalized_type ),
+						'code'    => esc_html( $code ),
+						'message' => esc_html( $issue['message'] ),
+						'docs'    => $issue['docs'] ?? null,
+						'issues'  => [],
+					];
+				}
+				$category_data[ $category_id ]['warnings'][ $code ]['issues'][] = $file_data;
 			}
 		}
 
@@ -379,10 +389,24 @@ class Group_Utils {
 
 			// Add errors first, then warnings.
 			if ( ! empty( $category['errors'] ) ) {
-				$types = array_merge( $types, array_values( $category['errors'] ) );
+				$processed_errors = array_values( $category['errors'] );
+				foreach ( $processed_errors as &$error ) {
+					$is_single = count( $error['issues'] ) === 1;
+					foreach ( $error['issues'] as &$issue ) {
+						$issue['is_single_file'] = $is_single;
+					}
+				}
+				$types = array_merge( $types, $processed_errors );
 			}
 			if ( ! empty( $category['warnings'] ) ) {
-				$types = array_merge( $types, array_values( $category['warnings'] ) );
+				$processed_warnings = array_values( $category['warnings'] );
+				foreach ( $processed_warnings as &$warning ) {
+					$is_single = count( $warning['issues'] ) === 1;
+					foreach ( $warning['issues'] as &$issue ) {
+						$issue['is_single_file'] = $is_single;
+					}
+				}
+				$types = array_merge( $types, $processed_warnings );
 			}
 
 			if ( ! empty( $types ) ) {
@@ -399,10 +423,24 @@ class Group_Utils {
 
 		// Add errors first, then warnings.
 		if ( ! empty( $misc_category['errors'] ) ) {
-			$misc_types = array_merge( $misc_types, array_values( $misc_category['errors'] ) );
+			$processed_misc_errors = array_values( $misc_category['errors'] );
+			foreach ( $processed_misc_errors as &$error ) {
+				$is_single = count( $error['issues'] ) === 1;
+				foreach ( $error['issues'] as &$issue ) {
+					$issue['is_single_file'] = $is_single;
+				}
+			}
+			$misc_types = array_merge( $misc_types, $processed_misc_errors );
 		}
 		if ( ! empty( $misc_category['warnings'] ) ) {
-			$misc_types = array_merge( $misc_types, array_values( $misc_category['warnings'] ) );
+			$processed_misc_warnings = array_values( $misc_category['warnings'] );
+			foreach ( $processed_misc_warnings as &$warning ) {
+				$is_single = count( $warning['issues'] ) === 1;
+				foreach ( $warning['issues'] as &$issue ) {
+					$issue['is_single_file'] = $is_single;
+				}
+			}
+			$misc_types = array_merge( $misc_types, $processed_misc_warnings );
 		}
 
 		if ( ! empty( $misc_types ) ) {

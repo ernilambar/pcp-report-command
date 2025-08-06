@@ -10,7 +10,7 @@ Quick links: [Using](#using) | [Installing](#installing)
 ## Using
 
 ~~~
-wp pcp-report <plugin> [--slug=<slug>] [--checks=<checks>] [--exclude-checks=<checks>] [--ignore-codes=<codes>] [--categories] [--ignore-warnings] [--ignore-errors] [--include-experimental] [--exclude-directories=<directories>] [--exclude-files=<files>] [--severity=<severity>] [--error-severity=<error-severity>] [--warning-severity=<warning-severity>] [--porcelain]
+wp pcp-report <plugin> [--slug=<slug>] [--checks=<checks>] [--exclude-checks=<checks>] [--ignore-codes=<codes>] [--categories] [--ignore-warnings] [--ignore-errors] [--include-experimental] [--exclude-directories=<directories>] [--exclude-files=<files>] [--severity=<severity>] [--error-severity=<error-severity>] [--warning-severity=<warning-severity>] [--grouped] [--open] [--porcelain]
 ~~~
 
 **OPTIONS**
@@ -59,6 +59,12 @@ wp pcp-report <plugin> [--slug=<slug>] [--checks=<checks>] [--exclude-checks=<ch
 	[--warning-severity=<warning-severity>]
 		Warning severity level.
 
+	[--grouped]
+		Display report in grouped format.
+
+	[--open]
+		Open report in default browser.
+
 	[--porcelain]
 		Output just the report file path.
 
@@ -66,6 +72,9 @@ wp pcp-report <plugin> [--slug=<slug>] [--checks=<checks>] [--exclude-checks=<ch
 
     # Generate report.
     $ wp pcp-report hello-dolly
+
+    # Generate grouped report.
+    $ wp pcp-report hello-dolly --grouped
 
     # Get report path only.
     $ wp pcp-report hello-dolly --porcelain=path

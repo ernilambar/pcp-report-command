@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Plugin Check Groups Configuration Schema",
+  "description": "Schema for defining issue groups and their categorization rules",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to the JSON schema file"
+    }
+  },
+  "additionalProperties": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^[a-z0-9_]+$",
+        "description": "Unique identifier for the group"
+      },
+      "title": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Human-readable title for the group"
+      },
+      "type": {
+        "type": "string",
+        "enum": ["prefix", "contains"],
+        "description": "Type of matching rule (only for direct groups without children)"
+      },
+      "checks": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minItems": 1,
+        "description": "Array of strings to match against issue codes (only for direct groups without children)"
+      },
+      "children": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]+$",
+              "description": "Unique identifier for the child group"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Human-readable title for the child group"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["prefix", "contains"],
+              "description": "Type of matching rule"
+            },
+            "parent": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]+$",
+              "description": "Parent group identifier"
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1,
+              "description": "Array of strings to match against issue codes"
+            }
+          },
+          "required": ["id", "title", "type", "parent", "checks"],
+          "additionalProperties": false
+        },
+        "description": "Child groups that belong to this parent group"
+      }
+    },
+    "required": ["id", "title"],
+    "additionalProperties": false,
+    "oneOf": [
+      {
+        "required": ["children"],
+        "not": {
+          "required": ["type", "checks"]
+        }
+      },
+      {
+        "required": ["type", "checks"],
+        "not": {
+          "required": ["children"]
+        }
+      }
+    ],
+    "description": "A group can either have children (parent group) or direct checks (leaf group), but not both"
+  },
+  "minProperties": 1
+}

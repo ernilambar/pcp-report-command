@@ -171,177 +171,166 @@ class Report_Command {
 	 * @return array Array of group definitions.
 	 */
 	public function get_group_details(): array {
+		$config_file = dirname( __DIR__ ) . '/data/groups.json';
+
+		if ( ! file_exists( $config_file ) ) {
+			return [];
+		}
+
+		$json_content = file_get_contents( $config_file );
+		$groups       = json_decode( $json_content, true );
+
+		if ( json_last_error() !== JSON_ERROR_NONE ) {
+			return [];
+		}
+
+		// Validate against schema if available.
+		$schema_file = dirname( __DIR__ ) . '/data/groups-schema.json';
+		if ( file_exists( $schema_file ) ) {
+			$schema = json_decode( file_get_contents( $schema_file ), true );
+			if ( json_last_error() === JSON_ERROR_NONE ) {
+				$validation_result = $this->validate_json_schema( $groups, $schema );
+				if ( ! $validation_result['valid'] ) {
+					error_log( 'Groups configuration validation failed: ' . $validation_result['error'] );
+					return [];
+				}
+			}
+		}
+
+		// Flatten the hierarchical structure for backward compatibility.
+		$flattened_groups = [];
+
+		foreach ( $groups as $group_id => $group_data ) {
+			// Add parent group.
+			$flattened_groups[ $group_id ] = [
+				'id'    => $group_data['id'],
+				'title' => $group_data['title'],
+			];
+
+			// Add child groups if they exist.
+			if ( isset( $group_data['children'] ) ) {
+				foreach ( $group_data['children'] as $child_id => $child_data ) {
+					$flattened_groups[ $child_id ] = [
+						'id'     => $child_data['id'],
+						'title'  => $child_data['title'],
+						'type'   => $child_data['type'],
+						'parent' => $child_data['parent'],
+						'checks' => $child_data['checks'],
+					];
+				}
+			} else {
+				// Direct group without children.
+				if ( isset( $group_data['type'] ) ) {
+					$flattened_groups[ $group_id ]['type'] = $group_data['type'];
+				}
+				if ( isset( $group_data['checks'] ) ) {
+					$flattened_groups[ $group_id ]['checks'] = $group_data['checks'];
+				}
+			}
+		}
+
+		return $flattened_groups;
+	}
+
+	/**
+	 * Validates JSON data against a JSON schema.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $data   Data to validate.
+	 * @param array $schema Schema to validate against.
+	 * @return array Validation result with 'valid' boolean and 'error' string.
+	 */
+	private function validate_json_schema( array $data, array $schema ): array {
+		$errors = [];
+
+		// Check if data is an object.
+		if ( ! is_array( $data ) ) {
+			return [
+				'valid' => false,
+				'error' => 'Data must be an object',
+			];
+		}
+
+		// Check pattern properties for group keys.
+		foreach ( $data as $key => $value ) {
+			if ( ! preg_match( '/^[a-z_]+$/', $key ) ) {
+				$errors[] = "Invalid group key: {$key} (must match pattern ^[a-z_]+$)";
+			}
+
+			if ( ! is_array( $value ) ) {
+				$errors[] = "Group {$key} must be an object";
+				continue;
+			}
+
+			// Check required properties.
+			if ( ! isset( $value['id'] ) || ! isset( $value['title'] ) ) {
+				$errors[] = "Group {$key} must have 'id' and 'title' properties";
+				continue;
+			}
+
+			// Check if it's a parent group (has children) or leaf group (has type and checks).
+			$has_children = isset( $value['children'] );
+			$has_checks   = isset( $value['type'] ) && isset( $value['checks'] );
+
+			if ( $has_children && $has_checks ) {
+				$errors[] = "Group {$key} cannot have both 'children' and 'type'/'checks' properties";
+			} elseif ( ! $has_children && ! $has_checks ) {
+				$errors[] = "Group {$key} must have either 'children' or 'type'/'checks' properties";
+			}
+
+			// Validate children if present.
+			if ( $has_children ) {
+				foreach ( $value['children'] as $child_key => $child_value ) {
+					if ( ! preg_match( '/^[a-z_]+$/', $child_key ) ) {
+						$errors[] = "Invalid child group key: {$child_key} in group {$key}";
+					}
+
+					if ( ! is_array( $child_value ) ) {
+						$errors[] = "Child group {$child_key} in group {$key} must be an object";
+						continue;
+					}
+
+					$required_child_props = [ 'id', 'title', 'type', 'parent', 'checks' ];
+					foreach ( $required_child_props as $prop ) {
+						if ( ! isset( $child_value[ $prop ] ) ) {
+							$errors[] = "Child group {$child_key} in group {$key} must have '{$prop}' property";
+						}
+					}
+
+					// Validate type enum.
+					if ( isset( $child_value['type'] ) && ! in_array( $child_value['type'], [ 'prefix', 'contains' ], true ) ) {
+						$errors[] = "Child group {$child_key} in group {$key} has invalid type: {$child_value['type']}";
+					}
+
+					// Validate checks array.
+					if ( isset( $child_value['checks'] ) ) {
+						if ( ! is_array( $child_value['checks'] ) ) {
+							$errors[] = "Child group {$child_key} in group {$key} 'checks' must be an array";
+						} elseif ( empty( $child_value['checks'] ) ) {
+							$errors[] = "Child group {$child_key} in group {$key} 'checks' array cannot be empty";
+						}
+					}
+				}
+			}
+
+			// Validate leaf group properties.
+			if ( $has_checks ) {
+				if ( ! in_array( $value['type'], [ 'prefix', 'contains' ], true ) ) {
+					$errors[] = "Group {$key} has invalid type: {$value['type']}";
+				}
+
+				if ( ! is_array( $value['checks'] ) ) {
+					$errors[] = "Group {$key} 'checks' must be an array";
+				} elseif ( empty( $value['checks'] ) ) {
+					$errors[] = "Group {$key} 'checks' array cannot be empty";
+				}
+			}
+		}
+
 		return [
-			// Trademarks.
-			'trademark'              => [
-				'id'    => 'trademark',
-				'title' => esc_html__( 'Trademarks' ),
-			],
-			'trademark_prefix'       => [
-				'id'     => 'trademark_prefix',
-				'title'  => esc_html__( 'Trademarks Prefix' ),
-				'type'   => 'prefix',
-				'parent' => 'trademark',
-				'checks' => [
-					'trademark_',
-				],
-			],
-			'trademark_contains'     => [
-				'id'     => 'trademark_contains',
-				'title'  => esc_html__( 'Trademarks Contains' ),
-				'type'   => 'contains',
-				'parent' => 'trademark',
-				'checks' => [
-					'trademark',
-				],
-			],
-			// Security.
-			'security'               => [
-				'id'    => 'security',
-				'title' => esc_html__( 'Security' ),
-			],
-			'security_prefix'        => [
-				'id'     => 'security_prefix',
-				'title'  => esc_html__( 'Security Prefix' ),
-				'parent' => 'security',
-				'type'   => 'prefix',
-				'checks' => [
-					'WordPress.Security',
-				],
-			],
-			'security_contains'      => [
-				'id'     => 'security_contains',
-				'title'  => esc_html__( 'Security Contains' ),
-				'parent' => 'security',
-				'type'   => 'contains',
-				'checks' => [
-					'allow_unfiltered_uploads_detected',
-					'PluginCheck.CodeAnalysis.SettingSanitization',
-					'uninstall_missing_define',
-					'uninstall_missing_constant_check',
-				],
-			],
-			// Plugin Readme.
-			'plugin_readme'          => [
-				'id'    => 'plugin_readme',
-				'title' => esc_html__( 'Plugin Readme' ),
-			],
-			'plugin_readme_contains' => [
-				'id'     => 'plugin_readme_contains',
-				'title'  => esc_html__( 'Plugin Readme Contains' ),
-				'parent' => 'plugin_readme',
-				'type'   => 'contains',
-				'checks' => [
-					'default_readme_text',
-					'no_license',
-					'empty_plugin_name',
-					'invalid_license',
-					'invalid_plugin_name',
-					'invalid_tested_upto_minor',
-					'license_mismatch',
-					'mismatched_plugin_name',
-					'missing_readme_header',
-					'no_plugin_readme',
-					'no_stable_tag',
-					'nonexistent_tested_upto_header',
-					'outdated_tested_upto_header',
-					'stable_tag_mismatch',
-					'trunk_stable_tag',
-					'upgrade_notice_limit',
-				],
-			],
-			'plugin_readme_prefix'   => [
-				'id'     => 'plugin_readme_prefix',
-				'title'  => esc_html__( 'Plugin Readme Prefix' ),
-				'parent' => 'plugin_readme',
-				'type'   => 'prefix',
-				'checks' => [
-					'readme_',
-				],
-			],
-			// Plugin Header.
-			'plugin_header'          => [
-				'id'    => 'plugin_header',
-				'title' => esc_html__( 'Plugin Header' ),
-			],
-			'plugin_header_prefix'   => [
-				'id'     => 'plugin_header_prefix',
-				'title'  => esc_html__( 'Plugin Header' ),
-				'parent' => 'plugin_header',
-				'type'   => 'prefix',
-				'checks' => [
-					'plugin_header_',
-				],
-			],
-			'plugin_header_misc'     => [
-				'id'     => 'plugin_header_misc',
-				'title'  => esc_html__( 'Plugin Header' ),
-				'type'   => 'contains',
-				'parent' => 'plugin_header',
-				'checks' => [
-					'textdomain_mismatch',
-				],
-			],
-			// Plugin Updater.
-			'plugin_updater'         => [
-				'id'     => 'plugin_updater',
-				'title'  => esc_html__( 'Plugin Updater' ),
-				'type'   => 'contains',
-				'checks' => [
-					'plugin_updater_detected',
-					'update_modification_detected',
-				],
-			],
-			// Files and folder.
-			'files_folders'          => [
-				'id'     => 'files_folders',
-				'title'  => esc_html__( 'Files and folders' ),
-				'type'   => 'contains',
-				'checks' => [
-					'application_detected',
-					'badly_named_files',
-					'compressed_files',
-					'empty_file',
-					'empty_folder',
-					'empty_pot_file',
-					'extraneous_plugin_assets_file',
-					'hidden_files',
-					'library_core_files',
-					'main_plugin_folder',
-					'phar_files',
-					'unconventional_main_filename',
-					'vcs_present',
-					'zip_filename',
-					'uninstall_faulty_php_file',
-				],
-			],
-			// I18n.
-			'i18n'                   => [
-				'id'    => 'i18n',
-				'title' => esc_html__( 'Internationalization' ),
-			],
-			'i18n_prefix'            => [
-				'id'     => 'i18n_prefix',
-				'title'  => esc_html__( 'Internationalization Prefix' ),
-				'parent' => 'i18n',
-				'type'   => 'prefix',
-				'checks' => [
-					'WordPress.WP.I18n',
-				],
-			],
-			'i18n_contains'          => [
-				'id'     => 'i18n_contains',
-				'title'  => esc_html__( 'Internationalization Contains' ),
-				'parent' => 'i18n',
-				'type'   => 'contains',
-				'checks' => [
-					'Language.I18nFunctionParameters',
-					'non_english_text_found',
-					'empty_pot_file',
-					'PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomain',
-					'textdomain_invalid_format',
-				],
-			],
+			'valid' => empty( $errors ),
+			'error' => empty( $errors ) ? '' : implode( '; ', $errors ),
 		];
 	}
 
@@ -396,7 +385,7 @@ class Report_Command {
 			}
 
 			// Check contains if no prefix match.
-			if ( 'ungrouped' === $group ) { // Avoid unnecessary checks if already grouped.
+			if ( 'ungrouped' === $group ) {
 				foreach ( $contains_map as $needle => $group_name ) {
 					if ( str_contains( $key, $needle ) ) {
 						$group = $group_name;
@@ -416,11 +405,11 @@ class Report_Command {
 			}
 		}
 
-		// Maintain order based on array order in get_group_details().
+		// Maintain order based on array order.
 		$ordered_errors = [];
 		$ungrouped      = $categorized_errors['ungrouped'] ?? [];
 
-		// Add groups in the order they appear in get_group_details().
+		// Add groups in the order they appear.
 		foreach ( $all_groups as $group_id => $group_details ) {
 			if ( isset( $categorized_errors[ $group_id ] ) && ! empty( $categorized_errors[ $group_id ] ) ) {
 				// Sort errors by type: error first, then warning.
@@ -461,8 +450,6 @@ class Report_Command {
 
 		return $ordered_errors;
 	}
-
-
 
 	/**
 	 * Prepares data for HTML template rendering.
@@ -606,9 +593,7 @@ class Report_Command {
 		return $data;
 	}
 
-
-
-		/**
+	/**
 	 * Gets the category ID for an issue based on its code.
 	 *
 	 * @since 1.0.0
@@ -617,7 +602,6 @@ class Report_Command {
 	 * @return string Category ID.
 	 */
 	private function get_issue_category_id( string $code ): string {
-		// Simple mapping based on the code patterns.
 		$all_groups = $this->get_group_details();
 
 		foreach ( $all_groups as $group_id => $group_details ) {

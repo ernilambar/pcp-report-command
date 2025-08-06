@@ -2,7 +2,7 @@
 /**
  * JSON_Utils
  *
- * @package Dashmate
+ * @package PCP_Report_Command
  */
 
 declare(strict_types=1);

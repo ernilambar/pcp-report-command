@@ -133,6 +133,43 @@ class Report_Command {
 			return;
 		}
 
-		WP_CLI::line( $stdout );
+		$template_data = $this->prepare_data( $stdout );
+
+		$html_content = $this->get_html_content( $template_data );
+		WP_CLI::line( $html_content );
+	}
+
+	private function prepare_data( string $json_data ): array {
+		$issues = json_decode( $json_data, true );
+
+		if ( empty( $issues ) ) {
+			return [];
+		}
+
+		$data = [
+			'issues' => array_map(
+				function ( $issue ) {
+					return [
+						'file'         => $issue['file'],
+						'type'         => $issue['type'],
+						'code'         => $issue['code'],
+						'line'         => $issue['line'],
+						'column'       => $issue['column'],
+						'has_location' => ( $issue['line'] > 0 ),
+						'message'      => $issue['message'],
+						'docs'         => $issue['docs'] ?? null,
+					];
+				},
+				$issues
+			),
+		];
+
+		return $data;
+	}
+
+	private function get_html_content( array $data ): string {
+		$template_path = dirname( __DIR__ ) . '/templates/';
+
+		return Utils\mustache_render( "{$template_path}/default.mustache", $data );
 	}
 }

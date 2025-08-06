@@ -1,0 +1,29 @@
+<section>
+  <h2>Plugin Check Report</h2>
+  <br><br>
+
+  {{#categories}}
+  <strong>## {{name}}</strong>
+  <br><br>
+
+  {{#types}}
+  <strong>{{type}}: {{code}}</strong><br><br>
+  {{message}}<br><br>
+
+  {{#issues}}
+  <pre><code>{{file}}{{#has_location}}:{{line}}{{/has_location}}</code></pre>
+  {{/issues}}
+
+  {{#docs}}
+  <a href="{{docs}}" target="_blank">Learn more</a><br><br>
+  {{/docs}}
+
+  {{/types}}
+
+  <br><br>
+  {{/categories}}
+
+  {{^categories}}
+  <p>No issues found.</p>
+  {{/categories}}
+</section>

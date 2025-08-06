@@ -68,6 +68,9 @@ class Report_Command {
 	 * [--warning-severity=<warning-severity>]
 	 * : Warning severity level.
 	 *
+	 * [--grouped]
+	 * : Display report in grouped format.
+	 *
 	 * [--porcelain]
 	 * : Output just the report file path.
 	 *
@@ -75,6 +78,9 @@ class Report_Command {
 	 *
 	 *     # Generate report.
 	 *     $ wp pcp-report hello-dolly
+	 *
+	 *     # Generate grouped report.
+	 *     $ wp pcp-report hello-dolly --grouped
 	 *
 	 *     # Get report path only.
 	 *     $ wp pcp-report hello-dolly --porcelain=path
@@ -89,6 +95,7 @@ class Report_Command {
 			'ignore-warnings',
 			'ignore-errors',
 			'include-experimental',
+			'grouped',
 		];
 
 		$command_text = sprintf( 'plugin check "%s"', esc_html( $plugin_slug ) );
@@ -99,7 +106,9 @@ class Report_Command {
 		];
 
 		$porcelain_mode = Utils\get_flag_value( $assoc_args, 'porcelain', false );
+		$grouped_mode   = Utils\get_flag_value( $assoc_args, 'grouped', false );
 		unset( $assoc_args['porcelain'] );
+		unset( $assoc_args['grouped'] );
 
 		$check_args = array_merge( $assoc_args, $check_args );
 
@@ -133,9 +142,9 @@ class Report_Command {
 			return;
 		}
 
-		$template_data = $this->prepare_data( $stdout );
+		$template_data = $this->prepare_data( $stdout, $grouped_mode );
 
-		$html_content = $this->get_html_content( $template_data );
+		$html_content = $this->get_html_content( $template_data, $grouped_mode );
 
 		$report_file = $this->get_reports_folder() . "/{$plugin_slug}.html";
 
@@ -160,30 +169,76 @@ class Report_Command {
 	 * @since 1.0.0
 	 *
 	 * @param string $json_data JSON string containing plugin check results.
+	 * @param bool   $grouped   Whether to group the data.
 	 * @return array Prepared data array for template rendering.
 	 */
-	private function prepare_data( string $json_data ): array {
+	private function prepare_data( string $json_data, bool $grouped = false ): array {
 		$issues = json_decode( $json_data, true );
 
 		if ( empty( $issues ) ) {
 			return [];
 		}
 
+		if ( ! $grouped ) {
+			$data = [
+				'issues' => array_map(
+					function ( $issue ) {
+						return [
+							'file'         => $issue['file'],
+							'type'         => $issue['type'],
+							'code'         => $issue['code'],
+							'line'         => $issue['line'],
+							'column'       => $issue['column'],
+							'has_location' => ( $issue['line'] > 0 ),
+							'message'      => $issue['message'],
+							'docs'         => $issue['docs'] ?? null,
+						];
+					},
+					$issues
+				),
+			];
+
+			return $data;
+		}
+
+		// Group issues by category and type.
+		$grouped_issues = [];
+		foreach ( $issues as $issue ) {
+			$category = $this->get_issue_category( $issue['code'] );
+			$type     = $issue['type'];
+			$code     = $issue['code'];
+
+			if ( ! isset( $grouped_issues[ $category ] ) ) {
+				$grouped_issues[ $category ] = [];
+			}
+			if ( ! isset( $grouped_issues[ $category ][ $code ] ) ) {
+				$grouped_issues[ $category ][ $code ] = [
+					'type'    => $type,
+					'code'    => $code,
+					'message' => $issue['message'],
+					'docs'    => $issue['docs'] ?? null,
+					'issues'  => [],
+				];
+			}
+
+			$grouped_issues[ $category ][ $code ]['issues'][] = [
+				'file'         => $issue['file'],
+				'line'         => $issue['line'],
+				'column'       => $issue['column'],
+				'has_location' => ( $issue['line'] > 0 ),
+			];
+		}
+
 		$data = [
-			'issues' => array_map(
-				function ( $issue ) {
+			'categories' => array_map(
+				function ( $category, $category_issues ) {
 					return [
-						'file'         => $issue['file'],
-						'type'         => $issue['type'],
-						'code'         => $issue['code'],
-						'line'         => $issue['line'],
-						'column'       => $issue['column'],
-						'has_location' => ( $issue['line'] > 0 ),
-						'message'      => $issue['message'],
-						'docs'         => $issue['docs'] ?? null,
+						'name'   => $category,
+						'types'  => array_values( $category_issues ),
 					];
 				},
-				$issues
+				array_keys( $grouped_issues ),
+				array_values( $grouped_issues )
 			),
 		];
 
@@ -191,17 +246,71 @@ class Report_Command {
 	}
 
 	/**
+	 * Gets the category for an issue based on its code.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $code Issue code.
+	 * @return string Category name.
+	 */
+	private function get_issue_category( string $code ): string {
+		// Map issue codes to categories based on the reference format.
+		$category_map = [
+			// Files and folders category.
+			'empty_file'                    => 'Files and folders',
+			'zip_filename'                  => 'Files and folders',
+			'unconventional_main_filename'  => 'Files and folders',
+
+			// Internationalization category.
+			'WordPress.WP.I18n.TextDomainMismatch' => 'Internationalization',
+			'WordPress.WP.I18n.MissingTextDomain'  => 'Internationalization',
+			'WordPress.WP.I18n.NonSingularStringLiteral' => 'Internationalization',
+
+			// Default category for unknown codes.
+			'default' => 'Other',
+		];
+
+		// Check if the code exists in our map.
+		if ( isset( $category_map[ $code ] ) ) {
+			return $category_map[ $code ];
+		}
+
+		// Check for WordPress coding standards patterns.
+		if ( strpos( $code, 'WordPress.' ) === 0 ) {
+			$parts = explode( '.', $code );
+			if ( count( $parts ) >= 3 ) {
+				$section = $parts[1];
+				switch ( $section ) {
+					case 'WP':
+						return 'WordPress Coding Standards';
+					case 'CS':
+						return 'Coding Standards';
+					case 'Security':
+						return 'Security';
+					default:
+						return 'WordPress Coding Standards';
+				}
+			}
+		}
+
+		// Default category.
+		return 'Other';
+	}
+
+	/**
 	 * Generates HTML content from template and data.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array $data Template data array.
+	 * @param array $data      Template data array.
+	 * @param bool  $grouped   Whether to use grouped template.
 	 * @return string Generated HTML content.
 	 */
-	private function get_html_content( array $data ): string {
+	private function get_html_content( array $data, bool $grouped = false ): string {
 		$template_path = dirname( __DIR__ ) . '/templates/';
+		$template_name = $grouped ? 'grouped.mustache' : 'default.mustache';
 
-		return Utils\mustache_render( "{$template_path}/default.mustache", $data );
+		return Utils\mustache_render( "{$template_path}/{$template_name}", $data );
 	}
 
 	/**

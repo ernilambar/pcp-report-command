@@ -1,28 +1,18 @@
 <section>
   <h2>Plugin Check Report</h2>
+  <br><br>
 
   {{#issues}}
-  <article>
-    <header>
-      <h2>{{file}}</h2>
-      <p>
-        <strong>{{type}}</strong> ({{code}})
-        {{#has_location}} - Line {{line}}, Column {{column}}{{/has_location}}
-      </p>
-    </header>
+  <strong>{{file}}</strong><br><br>
+  <strong>{{type}} ({{code}})</strong>
+  {{#has_location}} - Line {{line}}, Column {{column}}{{/has_location}}
+  <br><br>
+  {{message}}<br><br>
 
-    <blockquote>
-      <p>{{message}}</p>
-    </blockquote>
+  {{#docs}}
+  <a href="{{docs}}" target="_blank">Learn more</a><br><br>
+  {{/docs}}
 
-    {{#docs}}
-    <footer>
-      <p>
-        <a href="{{docs}}" target="_blank" rel="noopener">Learn more</a>
-      </p>
-    </footer>
-    {{/docs}}
-  </article>
   {{/issues}}
 
   {{^issues}}

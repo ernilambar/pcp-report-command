@@ -1,0 +1,31 @@
+<section>
+  <h1>Plugin Check Report</h1>
+
+  {{#issues}}
+  <article>
+    <header>
+      <h2>{{file}}</h2>
+      <p>
+        <strong>{{type}}</strong> ({{code}})
+        {{#has_location}} - Line {{line}}, Column {{column}}{{/has_location}}
+      </p>
+    </header>
+
+    <blockquote>
+      <p>{{message}}</p>
+    </blockquote>
+
+    {{#docs}}
+    <footer>
+      <p>
+        <a href="{{docs}}" target="_blank" rel="noopener">Read documentation →</a>
+      </p>
+    </footer>
+    {{/docs}}
+  </article>
+  {{/issues}}
+
+  {{^issues}}
+  <p>No issues found.</p>
+  {{/issues}}
+</section>

@@ -39,7 +39,6 @@
         "checks": [
           "allow_unfiltered_uploads_detected",
           "PluginCheck.CodeAnalysis.SettingSanitization",
-          "uninstall_missing_define",
           "uninstall_missing_constant_check"
         ]
       }
@@ -93,8 +92,8 @@
         "parent": "plugin_header",
         "checks": ["plugin_header_"]
       },
-      "plugin_header_misc": {
-        "id": "plugin_header_misc",
+      "plugin_header_contains": {
+        "id": "plugin_header_contains",
         "title": "Plugin Header",
         "type": "contains",
         "parent": "plugin_header",
@@ -106,10 +105,7 @@
     "id": "plugin_updater",
     "title": "Plugin Updater",
     "type": "contains",
-    "checks": [
-      "plugin_updater_detected",
-      "update_modification_detected"
-    ]
+    "checks": ["plugin_updater_detected", "update_modification_detected"]
   },
   "files_folders": {
     "id": "files_folders",
@@ -121,16 +117,13 @@
       "compressed_files",
       "empty_file",
       "empty_folder",
-      "empty_pot_file",
-      "extraneous_plugin_assets_file",
       "hidden_files",
       "library_core_files",
       "main_plugin_folder",
       "phar_files",
       "unconventional_main_filename",
       "vcs_present",
-      "zip_filename",
-      "uninstall_faulty_php_file"
+      "zip_filename"
     ]
   },
   "i18n": {
@@ -151,8 +144,6 @@
         "parent": "i18n",
         "checks": [
           "Language.I18nFunctionParameters",
-          "non_english_text_found",
-          "empty_pot_file",
           "PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomain",
           "textdomain_invalid_format"
         ]

@@ -49,7 +49,7 @@ class JSON_Utils {
 		$json_data = json_decode( $file_content, true );
 
 		// Check for JSON parsing errors.
-		if ( ! self::is_valid_json( $json_data ) ) {
+		if ( JSON_ERROR_NONE !== json_last_error() ) {
 			return new WP_Error(
 				'json_decode_error',
 				sprintf( 'JSON decode error: %s', json_last_error_msg() ),

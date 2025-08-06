@@ -1,78 +1,78 @@
 {
-    "name": "ernilambar/pcp-report-command",
-    "description": "Generate PCP results in HTML format.",
-    "license": "MIT",
-    "type": "wp-cli-package",
-    "authors": [
-        {
-            "name": "Nilambar Sharma",
-            "email": "nilambar@outlook.com",
-            "homepage": "https://www.nilambar.net",
-            "role": "Developer"
-        }
-    ],
-    "homepage": "https://github.com/ernilambar/pcp-report-command",
-    "support": {
-        "issues": "https://github.com/ernilambar/pcp-report-command/issues"
-    },
-    "require": {
-        "php": ">=7.4",
-        "justinrainbow/json-schema": "^6.4",
-        "wp-cli/wp-cli": "^2.12"
-    },
-    "require-dev": {
-        "slevomat/coding-standard": "^8.15",
-        "wp-cli/scaffold-package-command": "^2",
-        "wp-cli/wp-cli-tests": "^5"
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "autoload": {
-        "psr-4": {
-            "Nilambar\\PCP_Report_Command\\": "src"
-        },
-        "files": [
-            "command.php"
-        ]
-    },
-    "config": {
-        "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true,
-            "ergebnis/composer-normalize": true,
-            "johnpbloch/wordpress-core-installer": true,
-            "phpstan/extension-installer": true
-        },
-        "platform": {
-            "php": "7.4"
-        },
-        "process-timeout": 7200,
-        "sort-packages": true
-    },
-    "extra": {
-        "commands": [
-            "pcp-report"
-        ],
-        "readme": {
-            "sections": [
-                "Using",
-                "Installing"
-            ]
-        }
-    },
-    "scripts": {
-        "behat": "run-behat-tests",
-        "behat-rerun": "rerun-behat-tests",
-        "format": "run-phpcbf-cleanup",
-        "lint": "run-linter-tests",
-        "phpcs": "run-phpcs-tests",
-        "phpunit": "run-php-unit-tests",
-        "prepare-behat-tests": "install-package-tests",
-        "readme": "./vendor/bin/wp scaffold package-readme . --force --branch=main",
-        "test": [
-            "@lint",
-            "@phpcs",
-            "@phpunit",
-            "@behat"
-        ]
+  "name": "ernilambar/pcp-report-command",
+  "description": "Generate PCP results in HTML format.",
+  "license": "MIT",
+  "type": "wp-cli-package",
+  "authors": [
+    {
+      "name": "Nilambar Sharma",
+      "email": "nilambar@outlook.com",
+      "homepage": "https://www.nilambar.net",
+      "role": "Developer"
     }
+  ],
+  "homepage": "https://github.com/ernilambar/pcp-report-command",
+  "support": {
+    "issues": "https://github.com/ernilambar/pcp-report-command/issues"
+  },
+  "require": {
+    "php": ">=7.4",
+    "justinrainbow/json-schema": "^6.4",
+    "wp-cli/wp-cli": "^2.12"
+  },
+  "require-dev": {
+    "slevomat/coding-standard": "^8.15",
+    "wp-cli/scaffold-package-command": "^2",
+    "wp-cli/wp-cli-tests": "^5"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "autoload": {
+    "psr-4": {
+      "Nilambar\\PCP_Report_Command\\": "src"
+    },
+    "files": [
+      "command.php"
+    ]
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "ergebnis/composer-normalize": true,
+      "johnpbloch/wordpress-core-installer": true,
+      "phpstan/extension-installer": true
+    },
+    "platform": {
+      "php": "7.4"
+    },
+    "process-timeout": 7200,
+    "sort-packages": true
+  },
+  "extra": {
+    "commands": [
+      "pcp-report"
+    ],
+    "readme": {
+      "sections": [
+        "Using",
+        "Installing"
+      ]
+    }
+  },
+  "scripts": {
+    "behat": "run-behat-tests",
+    "behat-rerun": "rerun-behat-tests",
+    "format": "run-phpcbf-cleanup",
+    "lint": "run-linter-tests",
+    "phpcs": "run-phpcs-tests",
+    "phpunit": "run-php-unit-tests",
+    "prepare-behat-tests": "install-package-tests",
+    "readme": "./vendor/bin/wp scaffold package-readme . --force --branch=main",
+    "test": [
+      "@lint",
+      "@phpcs",
+      "@phpunit",
+      "@behat"
+    ]
+  }
 }

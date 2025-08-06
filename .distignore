@@ -1,11 +1,13 @@
+.cursor/
 .DS_Store
+.editorconfig
 .git
 .gitignore
 .gitlab-ci.yml
-.editorconfig
-.travis.yml
+.gherkin-lintrc
 behat.yml
 circle.yml
+LICENSE
 phpcs.xml.dist
 phpunit.xml.dist
 bin/

@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<ruleset name="WP-CLI-pcp-report">
+	<description>Custom ruleset for WP-CLI command</description>
+
+	<!--
+	#############################################################################
+	COMMAND LINE ARGUMENTS
+	For help understanding this file: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Annotated-ruleset.xml
+	For help using PHPCS: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Usage
+	#############################################################################
+	-->
+
+	<!-- What to scan. -->
+	<file>.</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+
+	<!-- Show progress. -->
+	<arg value="p"/>
+
+	<!-- Strip the filepaths down to the relevant bit. -->
+	<arg name="basepath" value="./"/>
+
+	<!-- Check up to 8 files simultaneously. -->
+	<arg name="parallel" value="8"/>
+
+	<rule ref="WordPress-Core">
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+		<exclude name="WordPress.Files.FileName"/>
+		<exclude name="WordPress.WP.CapitalPDangit.MisspelledInText"/>
+	</rule>
+
+	<rule ref="WordPress-Extra">
+		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents"/>
+		<exclude name="WordPress.WP.AlternativeFunctions.json_encode_json_encode"/>
+	</rule>
+
+	<!-- Enforce short arrays. -->
+	<rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
+
+	<!-- Disallows grouped use declarations. -->
+	<rule ref="SlevomatCodingStandard.Namespaces.DisallowGroupUse" />
+	<!-- Disallows leading backslash in use statement. -->
+	<rule ref="SlevomatCodingStandard.Namespaces.UseDoesNotStartWithBackslash" />
+	<!-- Checks whether uses at the top of a file are alphabetically sorted. -->
+	<rule ref="SlevomatCodingStandard.Namespaces.AlphabeticallySortedUses" />
+	<!-- Prohibits uses from the same namespace. -->
+	<rule ref="SlevomatCodingStandard.Namespaces.UseFromSameNamespace" />
+	<!-- Looks for unused imports from other namespaces. -->
+	<rule ref="SlevomatCodingStandard.Namespaces.UnusedUses">
+		<properties>
+			<property name="searchAnnotations" value="true" />
+		</properties>
+	</rule>
+	<!-- All references to functions, classes and constants should import using a use statement. -->
+	<rule ref="SlevomatCodingStandard.Namespaces.ReferenceUsedNamesOnly">
+		<properties>
+			<property name="allowFullyQualifiedGlobalFunctions" value="true" />
+			<property name="allowFullyQualifiedGlobalClasses" value="true" />
+			<property name="allowFullyQualifiedGlobalConstants" value="true" />
+			<property name="allowFallbackGlobalFunctions" value="true" />
+			<property name="allowFallbackGlobalConstants" value="true" />
+			<property name="allowFullyQualifiedNameForCollidingClasses" value="true" />
+		</properties>
+	</rule>
+
+	<!--
+	#############################################################################
+	PROJECT SPECIFIC CONFIGURATION FOR SNIFFS
+	#############################################################################
+	-->
+
+	<!-- For help understanding the `testVersion` configuration setting:
+		 https://github.com/PHPCompatibility/PHPCompatibility#sniffing-your-code-for-compatibility-with-specific-php-versions -->
+	<config name="testVersion" value="7.4-"/>
+
+	<!-- Verify that everything in the global namespace is either namespaced or prefixed.
+		 See: https://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards/wiki/Customizable-sniff-properties#naming-conventions-prefix-everything-in-the-global-namespace -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="Nilambar\PCP_Report_Command"/><!-- Namespaces. -->
+				<element value="wpcli_pcp_report"/><!-- Global variables and such. -->
+			</property>
+		</properties>
+	</rule>
+
+</ruleset>

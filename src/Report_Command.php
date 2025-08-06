@@ -21,6 +21,15 @@ use WP_CLI\Utils;
 class Report_Command {
 
 	/**
+	 * Group rules file.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string
+	 */
+	private $rules_file;
+
+	/**
 	 * JSON Schema validator instance.
 	 *
 	 * @since 1.0.0
@@ -35,7 +44,8 @@ class Report_Command {
 	 * @since 1.0.0
 	 */
 	public function __construct() {
-		$this->validator = new Validator();
+		$this->validator  = new Validator();
+		$this->rules_file = dirname( __DIR__ ) . '/data/groups.json';
 	}
 
 	/**
@@ -190,7 +200,7 @@ class Report_Command {
 	 * @return array Array of group definitions.
 	 */
 	public function get_group_details(): array {
-		$config_file = dirname( __DIR__ ) . '/data/groups.json';
+		$config_file = $this->rules_file;
 
 		if ( ! file_exists( $config_file ) ) {
 			return [];

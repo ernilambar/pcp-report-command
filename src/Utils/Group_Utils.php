@@ -20,6 +20,15 @@ use JsonSchema\Validator;
 class Group_Utils {
 
 	/**
+	 * Maximum number of files to display before showing summary.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var int
+	 */
+	const MAX_DISPLAYED_FILES = 3;
+
+	/**
 	 * Gets group details for categorizing plugin check issues.
 	 *
 	 * @since 1.0.0
@@ -391,8 +400,20 @@ class Group_Utils {
 			if ( ! empty( $category['errors'] ) ) {
 				$processed_errors = array_values( $category['errors'] );
 				foreach ( $processed_errors as &$error ) {
-					$is_single = count( $error['issues'] ) === 1;
-					foreach ( $error['issues'] as &$issue ) {
+					$total_files                  = count( $error['issues'] );
+					$is_single                    = $total_files === 1;
+					$error['has_multiple_files']  = ! $is_single;
+					$error['total_files']         = $total_files;
+					$error['has_more_than_three'] = $total_files > self::MAX_DISPLAYED_FILES;
+
+					// Limit displayed files to first MAX_DISPLAYED_FILES if more than MAX_DISPLAYED_FILES.
+					if ( $total_files > self::MAX_DISPLAYED_FILES ) {
+						$error['displayed_issues'] = array_slice( $error['issues'], 0, self::MAX_DISPLAYED_FILES );
+					} else {
+						$error['displayed_issues'] = $error['issues'];
+					}
+
+					foreach ( $error['displayed_issues'] as &$issue ) {
 						$issue['is_single_file'] = $is_single;
 					}
 				}
@@ -401,8 +422,20 @@ class Group_Utils {
 			if ( ! empty( $category['warnings'] ) ) {
 				$processed_warnings = array_values( $category['warnings'] );
 				foreach ( $processed_warnings as &$warning ) {
-					$is_single = count( $warning['issues'] ) === 1;
-					foreach ( $warning['issues'] as &$issue ) {
+					$total_files                    = count( $warning['issues'] );
+					$is_single                      = $total_files === 1;
+					$warning['has_multiple_files']  = ! $is_single;
+					$warning['total_files']         = $total_files;
+					$warning['has_more_than_three'] = $total_files > self::MAX_DISPLAYED_FILES;
+
+					// Limit displayed files to first MAX_DISPLAYED_FILES if more than MAX_DISPLAYED_FILES.
+					if ( $total_files > self::MAX_DISPLAYED_FILES ) {
+						$warning['displayed_issues'] = array_slice( $warning['issues'], 0, self::MAX_DISPLAYED_FILES );
+					} else {
+						$warning['displayed_issues'] = $warning['issues'];
+					}
+
+					foreach ( $warning['displayed_issues'] as &$issue ) {
 						$issue['is_single_file'] = $is_single;
 					}
 				}
@@ -425,8 +458,20 @@ class Group_Utils {
 		if ( ! empty( $misc_category['errors'] ) ) {
 			$processed_misc_errors = array_values( $misc_category['errors'] );
 			foreach ( $processed_misc_errors as &$error ) {
-				$is_single = count( $error['issues'] ) === 1;
-				foreach ( $error['issues'] as &$issue ) {
+				$total_files                  = count( $error['issues'] );
+				$is_single                    = $total_files === 1;
+				$error['has_multiple_files']  = ! $is_single;
+				$error['total_files']         = $total_files;
+				$error['has_more_than_three'] = $total_files > self::MAX_DISPLAYED_FILES;
+
+				// Limit displayed files to first 3 if more than 3.
+				if ( $total_files > self::MAX_DISPLAYED_FILES ) {
+					$error['displayed_issues'] = array_slice( $error['issues'], 0, self::MAX_DISPLAYED_FILES );
+				} else {
+					$error['displayed_issues'] = $error['issues'];
+				}
+
+				foreach ( $error['displayed_issues'] as &$issue ) {
 					$issue['is_single_file'] = $is_single;
 				}
 			}
@@ -435,8 +480,20 @@ class Group_Utils {
 		if ( ! empty( $misc_category['warnings'] ) ) {
 			$processed_misc_warnings = array_values( $misc_category['warnings'] );
 			foreach ( $processed_misc_warnings as &$warning ) {
-				$is_single = count( $warning['issues'] ) === 1;
-				foreach ( $warning['issues'] as &$issue ) {
+				$total_files                    = count( $warning['issues'] );
+				$is_single                      = $total_files === 1;
+				$warning['has_multiple_files']  = ! $is_single;
+				$warning['total_files']         = $total_files;
+				$warning['has_more_than_three'] = $total_files > self::MAX_DISPLAYED_FILES;
+
+				// Limit displayed files to first 3 if more than 3.
+				if ( $total_files > self::MAX_DISPLAYED_FILES ) {
+					$warning['displayed_issues'] = array_slice( $warning['issues'], 0, self::MAX_DISPLAYED_FILES );
+				} else {
+					$warning['displayed_issues'] = $warning['issues'];
+				}
+
+				foreach ( $warning['displayed_issues'] as &$issue ) {
 					$issue['is_single_file'] = $is_single;
 				}
 			}

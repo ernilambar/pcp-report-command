@@ -10,6 +10,13 @@ namespace Nilambar\PCP_Report_Command;
 use WP_CLI;
 use WP_CLI\Utils;
 
+/**
+ * Report Command Class.
+ *
+ * Generates HTML reports for plugin check command results.
+ *
+ * @since 1.0.0
+ */
 class Report_Command {
 
 	/**
@@ -136,9 +143,26 @@ class Report_Command {
 		$template_data = $this->prepare_data( $stdout );
 
 		$html_content = $this->get_html_content( $template_data );
-		WP_CLI::line( $html_content );
+
+		$report_file = $this->get_reports_folder() . "/{$plugin_slug}.html";
+
+		$status = $this->create_file( $report_file, $html_content );
+
+		if ( is_wp_error( $status ) ) {
+			WP_CLI::error( $status->get_error_message() );
+		}
+
+		WP_CLI::success( "Report: {$report_file}" );
 	}
 
+	/**
+	 * Prepares data for HTML template rendering.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $json_data JSON string containing plugin check results.
+	 * @return array Prepared data array for template rendering.
+	 */
 	private function prepare_data( string $json_data ): array {
 		$issues = json_decode( $json_data, true );
 
@@ -167,9 +191,95 @@ class Report_Command {
 		return $data;
 	}
 
+	/**
+	 * Generates HTML content from template and data.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $data Template data array.
+	 * @return string Generated HTML content.
+	 */
 	private function get_html_content( array $data ): string {
 		$template_path = dirname( __DIR__ ) . '/templates/';
 
 		return Utils\mustache_render( "{$template_path}/default.mustache", $data );
+	}
+
+	/**
+	 * Returns reports folder.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string Reports folder pull path.
+	 */
+	public static function get_reports_folder() {
+		$report_path = Utils\get_cache_dir() . '/pcp-report';
+
+		if ( ! wp_mkdir_p( $report_path ) ) {
+			return false;
+		}
+
+		return $report_path;
+	}
+
+	/**
+	 * Writes content to a file using file_put_contents() with proper WordPress error handling
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $file_path Full path to the file to be written
+	 * @param string $content Content to write to the file
+	 * @param bool $overwrite Whether to overwrite existing files (default: true)
+	 * @return bool|WP_Error True on success, WP_Error on failure
+	 */
+	function create_file( $file_path, $content = '', $overwrite = true ) {
+		$file_path = wp_normalize_path( $file_path );
+
+		// Check if file exists and overwrite is disabled.
+		if ( ! $overwrite && file_exists( $file_path ) ) {
+			return new WP_Error(
+				'file_exists',
+				'File already exists and overwrite is disabled',
+				[ 'file' => $file_path ]
+			);
+		}
+
+		// Ensure directory exists.
+		$dir = dirname( $file_path );
+		if ( ! file_exists( $dir ) ) {
+			if ( ! wp_mkdir_p( $dir ) ) {
+				return new WP_Error(
+					'directory_creation_failed',
+					'Could not create directory',
+					[ 'directory' => $dir ]
+				);
+			}
+		}
+
+		// Verify directory is writable.
+		if ( ! is_writable( $dir ) ) {
+			return new WP_Error(
+				'directory_not_writable',
+				'Directory is not writable',
+				[ 'directory' => $dir ]
+			);
+		}
+
+		// Attempt to write the file.
+		$result = file_put_contents( $file_path, $content, LOCK_EX );
+
+		if ( $result === false ) {
+			$error = error_get_last();
+			return new WP_Error(
+				'file_write_failed',
+				'Could not write file',
+				[
+					'file'  => $file_path,
+					'error' => $error ? $error['message'] : 'Unknown error',
+				]
+			);
+		}
+
+		return true;
 	}
 }

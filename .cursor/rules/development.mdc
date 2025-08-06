@@ -22,15 +22,19 @@ alwaysApply: true
   - File structure: Follow WordPress theme and plugin directory structures and naming conventions.
   - Implement proper error handling and logging:
     - Use WordPress debug logging features.
-    - Create custom error handlers when necessary.
-    - Use try-catch blocks for expected exceptions.
+    - Use WordPress error handling patterns (WP_Error objects) instead of try-catch blocks with Exception.
+	- Use `is_wp_error()` to check for errors and handle them appropriately.
+	- Return `WP_Error` objects for error conditions instead of throwing exceptions.
   - Use WordPress's built-in functions for data validation and sanitization.
   - Implement proper nonce verification for form submissions.
   - Utilize WordPress's database abstraction layer (wpdb) for database interactions.
   - Use prepare() statements for secure database queries.
   - Implement proper database schema changes using dbDelta() function.
-  - Always use Yoda conditions
-  - When possible use snake case naming convention
+  - Always use Yoda conditions.
+  - When possible use snake case naming convention.
+  - Inline comments in any type of files should start with capital letter and end with period character.
+  - PHP doc description should be concise.
+  - - Prefer since tag in PHP doc. Use "1.0.0" if does not exist. ALWAYS check for missing @since tags in PHPDoc blocks and add them where appropriate.
 
   Dependencies
   - WordPress (latest stable version)

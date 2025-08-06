@@ -164,6 +164,307 @@ class Report_Command {
 	}
 
 	/**
+	 * Gets group details for categorizing plugin check issues.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array Array of group definitions.
+	 */
+	public function get_group_details(): array {
+		return [
+			// Trademarks.
+			'trademark'              => [
+				'id'    => 'trademark',
+				'title' => esc_html__( 'Trademarks' ),
+			],
+			'trademark_prefix'       => [
+				'id'     => 'trademark_prefix',
+				'title'  => esc_html__( 'Trademarks Prefix' ),
+				'type'   => 'prefix',
+				'parent' => 'trademark',
+				'checks' => [
+					'trademark_',
+				],
+			],
+			'trademark_contains'     => [
+				'id'     => 'trademark_contains',
+				'title'  => esc_html__( 'Trademarks Contains' ),
+				'type'   => 'contains',
+				'parent' => 'trademark',
+				'checks' => [
+					'trademark',
+				],
+			],
+			// Security.
+			'security'               => [
+				'id'    => 'security',
+				'title' => esc_html__( 'Security' ),
+			],
+			'security_prefix'        => [
+				'id'     => 'security_prefix',
+				'title'  => esc_html__( 'Security Prefix' ),
+				'parent' => 'security',
+				'type'   => 'prefix',
+				'checks' => [
+					'WordPress.Security',
+				],
+			],
+			'security_contains'      => [
+				'id'     => 'security_contains',
+				'title'  => esc_html__( 'Security Contains' ),
+				'parent' => 'security',
+				'type'   => 'contains',
+				'checks' => [
+					'allow_unfiltered_uploads_detected',
+					'PluginCheck.CodeAnalysis.SettingSanitization',
+					'uninstall_missing_define',
+					'uninstall_missing_constant_check',
+				],
+			],
+			// Plugin Readme.
+			'plugin_readme'          => [
+				'id'    => 'plugin_readme',
+				'title' => esc_html__( 'Plugin Readme' ),
+			],
+			'plugin_readme_contains' => [
+				'id'     => 'plugin_readme_contains',
+				'title'  => esc_html__( 'Plugin Readme Contains' ),
+				'parent' => 'plugin_readme',
+				'type'   => 'contains',
+				'checks' => [
+					'default_readme_text',
+					'no_license',
+					'empty_plugin_name',
+					'invalid_license',
+					'invalid_plugin_name',
+					'invalid_tested_upto_minor',
+					'license_mismatch',
+					'mismatched_plugin_name',
+					'missing_readme_header',
+					'no_plugin_readme',
+					'no_stable_tag',
+					'nonexistent_tested_upto_header',
+					'outdated_tested_upto_header',
+					'stable_tag_mismatch',
+					'trunk_stable_tag',
+					'upgrade_notice_limit',
+				],
+			],
+			'plugin_readme_prefix'   => [
+				'id'     => 'plugin_readme_prefix',
+				'title'  => esc_html__( 'Plugin Readme Prefix' ),
+				'parent' => 'plugin_readme',
+				'type'   => 'prefix',
+				'checks' => [
+					'readme_',
+				],
+			],
+			// Plugin Header.
+			'plugin_header'          => [
+				'id'    => 'plugin_header',
+				'title' => esc_html__( 'Plugin Header' ),
+			],
+			'plugin_header_prefix'   => [
+				'id'     => 'plugin_header_prefix',
+				'title'  => esc_html__( 'Plugin Header' ),
+				'parent' => 'plugin_header',
+				'type'   => 'prefix',
+				'checks' => [
+					'plugin_header_',
+				],
+			],
+			'plugin_header_misc'     => [
+				'id'     => 'plugin_header_misc',
+				'title'  => esc_html__( 'Plugin Header' ),
+				'type'   => 'contains',
+				'parent' => 'plugin_header',
+				'checks' => [
+					'textdomain_mismatch',
+				],
+			],
+			// Plugin Updater.
+			'plugin_updater'         => [
+				'id'     => 'plugin_updater',
+				'title'  => esc_html__( 'Plugin Updater' ),
+				'type'   => 'contains',
+				'checks' => [
+					'plugin_updater_detected',
+					'update_modification_detected',
+				],
+			],
+			// Files and folder.
+			'files_folders'          => [
+				'id'     => 'files_folders',
+				'title'  => esc_html__( 'Files and folders' ),
+				'type'   => 'contains',
+				'checks' => [
+					'application_detected',
+					'badly_named_files',
+					'compressed_files',
+					'empty_file',
+					'empty_folder',
+					'empty_pot_file',
+					'extraneous_plugin_assets_file',
+					'hidden_files',
+					'library_core_files',
+					'main_plugin_folder',
+					'phar_files',
+					'unconventional_main_filename',
+					'vcs_present',
+					'zip_filename',
+					'uninstall_faulty_php_file',
+				],
+			],
+			// I18n.
+			'i18n'                   => [
+				'id'    => 'i18n',
+				'title' => esc_html__( 'Internationalization' ),
+			],
+			'i18n_prefix'            => [
+				'id'     => 'i18n_prefix',
+				'title'  => esc_html__( 'Internationalization Prefix' ),
+				'parent' => 'i18n',
+				'type'   => 'prefix',
+				'checks' => [
+					'WordPress.WP.I18n',
+				],
+			],
+			'i18n_contains'          => [
+				'id'     => 'i18n_contains',
+				'title'  => esc_html__( 'Internationalization Contains' ),
+				'parent' => 'i18n',
+				'type'   => 'contains',
+				'checks' => [
+					'Language.I18nFunctionParameters',
+					'non_english_text_found',
+					'empty_pot_file',
+					'PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomain',
+					'textdomain_invalid_format',
+				],
+			],
+		];
+	}
+
+	/**
+	 * Groups errors based on predefined categories and patterns.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $errors Array of errors to group.
+	 * @return array Grouped errors array.
+	 */
+	private function get_grouped_errors( array $errors ): array {
+		$prefix_map   = [];
+		$contains_map = [];
+
+		$all_groups = $this->get_group_details();
+
+		$all_prefixes = array_values( wp_list_filter( $all_groups, [ 'type' => 'prefix' ] ) );
+		$all_contains = array_values( wp_list_filter( $all_groups, [ 'type' => 'contains' ] ) );
+
+		if ( ! empty( $all_prefixes ) ) {
+			foreach ( $all_prefixes as $item ) {
+				$prefix_check = reset( $item['checks'] );
+
+				$prefix_map[ $prefix_check ] = $item['id'];
+			}
+		}
+
+		if ( ! empty( $all_contains ) ) {
+			foreach ( $all_contains as $item ) {
+				$all_checks = $item['checks'] ?? [];
+
+				foreach ( $all_checks as $check_string ) {
+					$contains_map[ $check_string ] = $item['id'];
+				}
+			}
+		}
+
+		$categorized_errors = [
+			'ungrouped' => [],
+		];
+
+		foreach ( $errors as $key => $value ) {
+			$group = 'ungrouped';
+
+			// Check prefixes first.
+			foreach ( $prefix_map as $prefix => $group_name ) {
+				if ( str_starts_with( $key, $prefix ) ) {
+					$group = $group_name;
+					break;
+				}
+			}
+
+			// Check contains if no prefix match.
+			if ( 'ungrouped' === $group ) { // Avoid unnecessary checks if already grouped.
+				foreach ( $contains_map as $needle => $group_name ) {
+					if ( str_contains( $key, $needle ) ) {
+						$group = $group_name;
+						break;
+					}
+				}
+			}
+
+			$categorized_errors[ $group ][] = [
+				'key'    => $key,
+				'type'   => $value[0]['type'],
+				'values' => $value,
+			];
+
+			if ( ! isset( $categorized_errors[ $group ] ) ) {
+				$categorized_errors[ $group ] = []; // Ensure group exists.
+			}
+		}
+
+		// Maintain order based on array order in get_group_details().
+		$ordered_errors = [];
+		$ungrouped      = $categorized_errors['ungrouped'] ?? [];
+
+		// Add groups in the order they appear in get_group_details().
+		foreach ( $all_groups as $group_id => $group_details ) {
+			if ( isset( $categorized_errors[ $group_id ] ) && ! empty( $categorized_errors[ $group_id ] ) ) {
+				// Sort errors by type: error first, then warning.
+				$group_errors = $categorized_errors[ $group_id ];
+				usort(
+					$group_errors,
+					function ( $a, $b ) {
+						$type_order = [
+							'error'   => 1,
+							'warning' => 2,
+						];
+						$a_order    = $type_order[ $a['type'] ] ?? 3;
+						$b_order    = $type_order[ $b['type'] ] ?? 3;
+						return $a_order - $b_order;
+					}
+				);
+				$ordered_errors[ $group_id ] = $group_errors;
+			}
+		}
+
+		// Add ungrouped at the end if it has items.
+		if ( ! empty( $ungrouped ) ) {
+			// Sort ungrouped errors by type: error first, then warning.
+			usort(
+				$ungrouped,
+				function ( $a, $b ) {
+					$type_order = [
+						'error'   => 1,
+						'warning' => 2,
+					];
+					$a_order    = $type_order[ $a['type'] ] ?? 3;
+					$b_order    = $type_order[ $b['type'] ] ?? 3;
+					return $a_order - $b_order;
+				}
+			);
+			$ordered_errors['ungrouped'] = $ungrouped;
+		}
+
+		return $ordered_errors;
+	}
+
+
+
+	/**
 	 * Prepares data for HTML template rendering.
 	 *
 	 * @since 1.0.0
@@ -201,100 +502,140 @@ class Report_Command {
 			return $data;
 		}
 
-		// Group issues by category and type.
-		$grouped_issues = [];
-		foreach ( $issues as $issue ) {
-			$category = $this->get_issue_category( $issue['code'] );
-			$type     = $issue['type'];
-			$code     = $issue['code'];
+		// Group issues by category and type with proper sorting.
+		$categories = [];
+		$all_groups = $this->get_group_details();
 
-			if ( ! isset( $grouped_issues[ $category ] ) ) {
-				$grouped_issues[ $category ] = [];
+		// Initialize category arrays with only error and warning types.
+		$category_data = [];
+		foreach ( $all_groups as $group_id => $group_details ) {
+			$category_data[ $group_id ] = [
+				'name'     => $group_details['title'],
+				'errors'   => [],
+				'warnings' => [],
+			];
+		}
+		$category_data['ungrouped'] = [
+			'name'     => 'Misc Issues',
+			'errors'   => [],
+			'warnings' => [],
+		];
+
+		// Process each issue and assign to appropriate category and type.
+		foreach ( $issues as $issue ) {
+			$code = $issue['code'];
+			$type = $issue['type'];
+
+			// Normalize the type to handle different case variations.
+			$normalized_type = strtolower( $type );
+
+			// Only process error and warning types.
+			if ( ! in_array( $normalized_type, [ 'error', 'warning' ], true ) ) {
+				continue;
 			}
-			if ( ! isset( $grouped_issues[ $category ][ $code ] ) ) {
-				$grouped_issues[ $category ][ $code ] = [
-					'type'    => $type,
-					'code'    => $code,
-					'message' => $issue['message'],
-					'docs'    => $issue['docs'] ?? null,
-					'issues'  => [],
+
+			$category_id = $this->get_issue_category_id( $code );
+
+			$issue_data = [
+				'type'    => strtoupper( $normalized_type ),
+				'code'    => $code,
+				'message' => $issue['message'],
+				'docs'    => $issue['docs'] ?? null,
+				'issues'  => [
+					[
+						'file'         => $issue['file'],
+						'line'         => $issue['line'],
+						'column'       => $issue['column'],
+						'has_location' => ( $issue['line'] > 0 ),
+					],
+				],
+			];
+
+			// Add to appropriate type array within the category.
+			if ( 'error' === $normalized_type ) {
+				$category_data[ $category_id ]['errors'][ $code ] = $issue_data;
+			} elseif ( 'warning' === $normalized_type ) {
+				$category_data[ $category_id ]['warnings'][ $code ] = $issue_data;
+			}
+		}
+
+		// Build final categories in the correct order with proper sorting.
+		foreach ( $all_groups as $group_id => $group_details ) {
+			$category = $category_data[ $group_id ];
+			$types    = [];
+
+			// Add errors first, then warnings.
+			if ( ! empty( $category['errors'] ) ) {
+				$types = array_merge( $types, array_values( $category['errors'] ) );
+			}
+			if ( ! empty( $category['warnings'] ) ) {
+				$types = array_merge( $types, array_values( $category['warnings'] ) );
+			}
+
+			if ( ! empty( $types ) ) {
+				$categories[] = [
+					'name'  => $category['name'],
+					'types' => $types,
 				];
 			}
+		}
 
-			$grouped_issues[ $category ][ $code ]['issues'][] = [
-				'file'         => $issue['file'],
-				'line'         => $issue['line'],
-				'column'       => $issue['column'],
-				'has_location' => ( $issue['line'] > 0 ),
+		// Add ungrouped items as "Misc Issues" at the end.
+		$misc_category = $category_data['ungrouped'];
+		$misc_types    = [];
+
+		// Add errors first, then warnings.
+		if ( ! empty( $misc_category['errors'] ) ) {
+			$misc_types = array_merge( $misc_types, array_values( $misc_category['errors'] ) );
+		}
+		if ( ! empty( $misc_category['warnings'] ) ) {
+			$misc_types = array_merge( $misc_types, array_values( $misc_category['warnings'] ) );
+		}
+
+		if ( ! empty( $misc_types ) ) {
+			$categories[] = [
+				'name'  => 'Misc Issues',
+				'types' => $misc_types,
 			];
 		}
 
 		$data = [
-			'categories' => array_map(
-				function ( $category, $category_issues ) {
-					return [
-						'name'   => $category,
-						'types'  => array_values( $category_issues ),
-					];
-				},
-				array_keys( $grouped_issues ),
-				array_values( $grouped_issues )
-			),
+			'categories' => $categories,
 		];
 
 		return $data;
 	}
 
-	/**
-	 * Gets the category for an issue based on its code.
+
+
+		/**
+	 * Gets the category ID for an issue based on its code.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @param string $code Issue code.
-	 * @return string Category name.
+	 * @return string Category ID.
 	 */
-	private function get_issue_category( string $code ): string {
-		// Map issue codes to categories based on the reference format.
-		$category_map = [
-			// Files and folders category.
-			'empty_file'                    => 'Files and folders',
-			'zip_filename'                  => 'Files and folders',
-			'unconventional_main_filename'  => 'Files and folders',
+	private function get_issue_category_id( string $code ): string {
+		// Simple mapping based on the code patterns.
+		$all_groups = $this->get_group_details();
 
-			// Internationalization category.
-			'WordPress.WP.I18n.TextDomainMismatch' => 'Internationalization',
-			'WordPress.WP.I18n.MissingTextDomain'  => 'Internationalization',
-			'WordPress.WP.I18n.NonSingularStringLiteral' => 'Internationalization',
-
-			// Default category for unknown codes.
-			'default' => 'Other',
-		];
-
-		// Check if the code exists in our map.
-		if ( isset( $category_map[ $code ] ) ) {
-			return $category_map[ $code ];
-		}
-
-		// Check for WordPress coding standards patterns.
-		if ( strpos( $code, 'WordPress.' ) === 0 ) {
-			$parts = explode( '.', $code );
-			if ( count( $parts ) >= 3 ) {
-				$section = $parts[1];
-				switch ( $section ) {
-					case 'WP':
-						return 'WordPress Coding Standards';
-					case 'CS':
-						return 'Coding Standards';
-					case 'Security':
-						return 'Security';
-					default:
-						return 'WordPress Coding Standards';
+		foreach ( $all_groups as $group_id => $group_details ) {
+			if ( isset( $group_details['checks'] ) ) {
+				foreach ( $group_details['checks'] as $check ) {
+					if ( str_starts_with( $code, $check ) || str_contains( $code, $check ) ) {
+						// Check if this is a child category and return the parent instead.
+						if ( isset( $group_details['parent'] ) && ! empty( $group_details['parent'] ) ) {
+							return $group_details['parent'];
+						}
+						return $group_id;
+					}
 				}
 			}
 		}
 
-		// Default category.
-		return 'Other';
+		// Default category if no match found.
+		return 'ungrouped';
 	}
 
 	/**

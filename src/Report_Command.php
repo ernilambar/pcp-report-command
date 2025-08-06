@@ -68,13 +68,9 @@ class Report_Command {
 	 * [--warning-severity=<warning-severity>]
 	 * : Warning severity level.
 	 *
-	 * [--porcelain=<field>]
-	 * : Output a single value.
-	 * ---
-	 * options:
-	 *   - path
-	 * ---
-
+	 * [--porcelain]
+	 * : Output just the report file path.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     # Generate report.
@@ -87,9 +83,6 @@ class Report_Command {
 	 * @param array $assoc_args Associative array of options.
 	 */
 	public function __invoke( $args, $assoc_args = [] ) {
-		// Keep backup.
-		$original_assoc_args = $assoc_args;
-
 		$plugin_slug = isset( $args[0] ) ? $args[0] : '';
 
 		$flags = [
@@ -105,7 +98,7 @@ class Report_Command {
 			'fields' => 'file,line,column,type,code,message,docs',
 		];
 
-		$porcelain_mode = Utils\get_flag_value( $assoc_args, 'porcelain', '' );
+		$porcelain_mode = Utils\get_flag_value( $assoc_args, 'porcelain', false );
 		unset( $assoc_args['porcelain'] );
 
 		$check_args = array_merge( $assoc_args, $check_args );
@@ -152,7 +145,13 @@ class Report_Command {
 			WP_CLI::error( $status->get_error_message() );
 		}
 
-		WP_CLI::success( "Report: {$report_file}" );
+		if ( true === $porcelain_mode ) {
+			WP_CLI::line( $report_file );
+			return;
+		}
+
+		WP_CLI::log( 'Report file: ' . $report_file );
+		WP_CLI::success( 'PCP report generated successfully.' );
 	}
 
 	/**

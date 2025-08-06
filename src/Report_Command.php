@@ -51,14 +51,24 @@ class Report_Command {
 	private $templates_folder;
 
 	/**
+	 * Custom rules file path.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string|null
+	 */
+	private $custom_rules_file;
+
+	/**
 	 * Constructor.
 	 *
 	 * @since 1.0.0
 	 */
 	public function __construct() {
-		$this->rules_file       = dirname( __DIR__ ) . '/data/groups.json';
-		$this->reports_folder   = $this->get_reports_folder();
-		$this->templates_folder = dirname( __DIR__ ) . '/templates';
+		$this->rules_file        = dirname( __DIR__ ) . '/data/groups.json';
+		$this->reports_folder    = $this->get_reports_folder();
+		$this->templates_folder  = dirname( __DIR__ ) . '/templates';
+		$this->custom_rules_file = null;
 	}
 
 	/**
@@ -119,6 +129,9 @@ class Report_Command {
 	 * [--porcelain]
 	 * : Output just the report file path.
 	 *
+	 * [--rules=<rules>]
+	 * : Path to custom rules JSON file for grouping plugin check issues.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     # Generate report.
@@ -126,6 +139,9 @@ class Report_Command {
 	 *
 	 *     # Generate grouped report.
 	 *     $ wp pcp-report hello-dolly --grouped
+	 *
+	 *     # Generate report with custom rules file.
+	 *     $ wp pcp-report hello-dolly --rules=/path/to/custom-rules.json
 	 *
 	 *     # Get report path only.
 	 *     $ wp pcp-report hello-dolly --porcelain=path
@@ -153,9 +169,23 @@ class Report_Command {
 		$porcelain_mode  = Utils\get_flag_value( $assoc_args, 'porcelain', false );
 		$grouped_mode    = Utils\get_flag_value( $assoc_args, 'grouped', false );
 		$open_in_browser = Utils\get_flag_value( $assoc_args, 'open', false );
+		$rules_file      = Utils\get_flag_value( $assoc_args, 'rules', '' );
+
+		// Set custom rules file if provided.
+		if ( ! empty( $rules_file ) ) {
+			// Validate the custom rules file using JSON_Utils.
+			$rules_data = JSON_Utils::read_json( $rules_file );
+			if ( is_wp_error( $rules_data ) ) {
+				WP_CLI::error( sprintf( 'Invalid custom rules file: %s', $rules_data->get_error_message() ) );
+			}
+
+			$this->custom_rules_file = $rules_file;
+		}
+
 		unset( $assoc_args['porcelain'] );
 		unset( $assoc_args['grouped'] );
 		unset( $assoc_args['open'] );
+		unset( $assoc_args['rules'] );
 
 		$check_args = array_merge( $assoc_args, $check_args );
 
@@ -229,7 +259,8 @@ class Report_Command {
 	 * @return array Array of group definitions.
 	 */
 	public function get_group_info(): array {
-		return Group_Utils::get_group_details( $this->rules_file );
+		$rules_file = $this->custom_rules_file ? $this->custom_rules_file : $this->rules_file;
+		return Group_Utils::get_group_details( $rules_file );
 	}
 
 	/**

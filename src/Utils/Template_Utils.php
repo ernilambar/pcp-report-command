@@ -68,11 +68,11 @@ class Template_Utils {
 	 * @return string Formatted message with pre/code tags.
 	 */
 	public static function format_message( string $message ): string {
-		// Escape HTML first to prevent XSS
+		// Escape HTML first to prevent XSS.
 		$escaped_message = esc_html( $message );
 
-		// Convert backticks to pre/code tags (handles backticks anywhere including end of message)
-		$formatted_message = preg_replace( '/`([^`]+)`/', '<pre><code>$1</code></pre>', $escaped_message );
+		// Convert backticks to pre/code tags only at the end of the message.
+		$formatted_message = preg_replace( '/`([^`]+)`$/', '<pre><code>$1</code></pre>', $escaped_message );
 
 		return $formatted_message;
 	}

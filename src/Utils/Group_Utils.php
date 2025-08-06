@@ -398,48 +398,12 @@ class Group_Utils {
 
 			// Add errors first, then warnings.
 			if ( ! empty( $category['errors'] ) ) {
-				$processed_errors = array_values( $category['errors'] );
-				foreach ( $processed_errors as &$error ) {
-					$total_files                  = count( $error['issues'] );
-					$is_single                    = $total_files === 1;
-					$error['has_multiple_files']  = ! $is_single;
-					$error['total_files']         = $total_files;
-					$error['has_more_than_three'] = $total_files > self::MAX_DISPLAYED_FILES;
-
-					// Limit displayed files to first MAX_DISPLAYED_FILES if more than MAX_DISPLAYED_FILES.
-					if ( $total_files > self::MAX_DISPLAYED_FILES ) {
-						$error['displayed_issues'] = array_slice( $error['issues'], 0, self::MAX_DISPLAYED_FILES );
-					} else {
-						$error['displayed_issues'] = $error['issues'];
-					}
-
-					foreach ( $error['displayed_issues'] as &$issue ) {
-						$issue['is_single_file'] = $is_single;
-					}
-				}
-				$types = array_merge( $types, $processed_errors );
+				$processed_errors = self::process_issue_types( $category['errors'] );
+				$types            = array_merge( $types, $processed_errors );
 			}
 			if ( ! empty( $category['warnings'] ) ) {
-				$processed_warnings = array_values( $category['warnings'] );
-				foreach ( $processed_warnings as &$warning ) {
-					$total_files                    = count( $warning['issues'] );
-					$is_single                      = $total_files === 1;
-					$warning['has_multiple_files']  = ! $is_single;
-					$warning['total_files']         = $total_files;
-					$warning['has_more_than_three'] = $total_files > self::MAX_DISPLAYED_FILES;
-
-					// Limit displayed files to first MAX_DISPLAYED_FILES if more than MAX_DISPLAYED_FILES.
-					if ( $total_files > self::MAX_DISPLAYED_FILES ) {
-						$warning['displayed_issues'] = array_slice( $warning['issues'], 0, self::MAX_DISPLAYED_FILES );
-					} else {
-						$warning['displayed_issues'] = $warning['issues'];
-					}
-
-					foreach ( $warning['displayed_issues'] as &$issue ) {
-						$issue['is_single_file'] = $is_single;
-					}
-				}
-				$types = array_merge( $types, $processed_warnings );
+				$processed_warnings = self::process_issue_types( $category['warnings'] );
+				$types              = array_merge( $types, $processed_warnings );
 			}
 
 			if ( ! empty( $types ) ) {
@@ -456,48 +420,12 @@ class Group_Utils {
 
 		// Add errors first, then warnings.
 		if ( ! empty( $misc_category['errors'] ) ) {
-			$processed_misc_errors = array_values( $misc_category['errors'] );
-			foreach ( $processed_misc_errors as &$error ) {
-				$total_files                  = count( $error['issues'] );
-				$is_single                    = $total_files === 1;
-				$error['has_multiple_files']  = ! $is_single;
-				$error['total_files']         = $total_files;
-				$error['has_more_than_three'] = $total_files > self::MAX_DISPLAYED_FILES;
-
-				// Limit displayed files to first 3 if more than 3.
-				if ( $total_files > self::MAX_DISPLAYED_FILES ) {
-					$error['displayed_issues'] = array_slice( $error['issues'], 0, self::MAX_DISPLAYED_FILES );
-				} else {
-					$error['displayed_issues'] = $error['issues'];
-				}
-
-				foreach ( $error['displayed_issues'] as &$issue ) {
-					$issue['is_single_file'] = $is_single;
-				}
-			}
-			$misc_types = array_merge( $misc_types, $processed_misc_errors );
+			$processed_misc_errors = self::process_issue_types( $misc_category['errors'] );
+			$misc_types            = array_merge( $misc_types, $processed_misc_errors );
 		}
 		if ( ! empty( $misc_category['warnings'] ) ) {
-			$processed_misc_warnings = array_values( $misc_category['warnings'] );
-			foreach ( $processed_misc_warnings as &$warning ) {
-				$total_files                    = count( $warning['issues'] );
-				$is_single                      = $total_files === 1;
-				$warning['has_multiple_files']  = ! $is_single;
-				$warning['total_files']         = $total_files;
-				$warning['has_more_than_three'] = $total_files > self::MAX_DISPLAYED_FILES;
-
-				// Limit displayed files to first 3 if more than 3.
-				if ( $total_files > self::MAX_DISPLAYED_FILES ) {
-					$warning['displayed_issues'] = array_slice( $warning['issues'], 0, self::MAX_DISPLAYED_FILES );
-				} else {
-					$warning['displayed_issues'] = $warning['issues'];
-				}
-
-				foreach ( $warning['displayed_issues'] as &$issue ) {
-					$issue['is_single_file'] = $is_single;
-				}
-			}
-			$misc_types = array_merge( $misc_types, $processed_misc_warnings );
+			$processed_misc_warnings = self::process_issue_types( $misc_category['warnings'] );
+			$misc_types              = array_merge( $misc_types, $processed_misc_warnings );
 		}
 
 		if ( ! empty( $misc_types ) ) {
@@ -510,5 +438,36 @@ class Group_Utils {
 		return [
 			'categories' => $categories,
 		];
+	}
+
+	/**
+	 * Processes issue types to add display flags and limit files shown.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $issue_types Array of issue types (errors or warnings).
+	 * @return array Processed issue types with display flags.
+	 */
+	private static function process_issue_types( array $issue_types ): array {
+		$processed_types = array_values( $issue_types );
+		foreach ( $processed_types as &$type ) {
+			$total_files                 = count( $type['issues'] );
+			$is_single                   = $total_files === 1;
+			$type['has_multiple_files']  = ! $is_single;
+			$type['total_files']         = $total_files;
+			$type['has_more_than_three'] = $total_files > self::MAX_DISPLAYED_FILES;
+
+			// Limit displayed files to first MAX_DISPLAYED_FILES if more than MAX_DISPLAYED_FILES.
+			if ( $total_files > self::MAX_DISPLAYED_FILES ) {
+				$type['displayed_issues'] = array_slice( $type['issues'], 0, self::MAX_DISPLAYED_FILES );
+			} else {
+				$type['displayed_issues'] = $type['issues'];
+			}
+
+			foreach ( $type['displayed_issues'] as &$issue ) {
+				$issue['is_single_file'] = $is_single;
+			}
+		}
+		return $processed_types;
 	}
 }

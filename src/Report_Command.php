@@ -10,6 +10,7 @@ namespace Nilambar\PCP_Report_Command;
 use Nilambar\PCP_Report_Command\Utils\File_Utils;
 use Nilambar\PCP_Report_Command\Utils\Group_Utils;
 use Nilambar\PCP_Report_Command\Utils\JSON_Utils;
+use Nilambar\PCP_Report_Command\Utils\Template_Utils;
 use WP_CLI;
 use WP_CLI\Utils;
 
@@ -249,6 +250,17 @@ class Report_Command {
 	}
 
 	/**
+	 * Gets the report title.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string Report title.
+	 */
+	private function get_report_title(): string {
+		return 'Plugin Check Report';
+	}
+
+	/**
 	 * Prepares data for HTML template rendering.
 	 *
 	 * @since 1.0.0
@@ -271,9 +283,12 @@ class Report_Command {
 		}
 
 		// Prepare data based on mode.
-		$data = $grouped
-			? Group_Utils::prepare_grouped_data( $issues, $this->get_group_info() )
-			: $this->prepare_simple_data( $issues );
+		if ( $grouped ) {
+			$data          = Group_Utils::prepare_grouped_data( $issues, $this->get_group_info() );
+			$data['title'] = $this->get_report_title();
+		} else {
+			$data = $this->prepare_simple_data( $issues );
+		}
 
 		return $data;
 	}
@@ -288,6 +303,7 @@ class Report_Command {
 	 */
 	private function prepare_simple_data( array $issues ): array {
 		return [
+			'title'  => $this->get_report_title(),
 			'issues' => array_map(
 				function ( $issue ) {
 					return [
@@ -297,7 +313,7 @@ class Report_Command {
 						'line'         => $issue['line'],
 						'column'       => $issue['column'],
 						'has_location' => ( $issue['line'] > 0 ),
-						'message'      => $issue['message'],
+						'message'      => Template_Utils::format_message( $issue['message'] ),
 						'docs'         => $issue['docs'] ?? null,
 					];
 				},
@@ -311,12 +327,13 @@ class Report_Command {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array  $data           Template data array.
-	 * @param string   $type        Template type.
+	 * @param array  $data Template data array.
+	 * @param string $type Template type.
 	 * @return string Generated HTML content.
 	 */
 	private function get_html_content( array $data, string $type = 'default' ): string {
-		return Utils\mustache_render( "{$this->templates_folder}/{$type}.mustache", $data );
+		$template_path = "{$this->templates_folder}/{$type}.php";
+		return Template_Utils::render( $template_path, $data );
 	}
 
 	/**

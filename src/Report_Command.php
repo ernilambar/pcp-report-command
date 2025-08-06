@@ -236,7 +236,7 @@ class Report_Command {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return string Reports folder pull path.
+	 * @return string|false Reports folder full path or false on failure.
 	 */
 	private function get_reports_folder() {
 		$report_path = Utils\get_cache_dir() . '/pcp-report';

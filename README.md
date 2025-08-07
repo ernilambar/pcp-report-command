@@ -83,7 +83,7 @@ wp pcp-report <plugin> [--slug=<slug>] [--checks=<checks>] [--exclude-checks=<ch
     $ wp pcp-report hello-dolly --rules=/path/to/custom-rules.json
 
     # Get report path only.
-    $ wp pcp-report hello-dolly --porcelain=path
+    $ wp pcp-report hello-dolly --porcelain
 
 ## Installing
 

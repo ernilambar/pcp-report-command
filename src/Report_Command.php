@@ -129,8 +129,8 @@ class Report_Command {
 	 * [--porcelain]
 	 * : Output just the report file path.
 	 *
-	 * [--rules=<rules>]
-	 * : Path to custom rules JSON file for grouping plugin check issues.
+	 * [--group-config=<group-config>]
+	 * : Path to custom group configuration JSON file for grouping plugin check issues.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -140,11 +140,11 @@ class Report_Command {
 	 *     # Generate grouped report.
 	 *     $ wp pcp-report hello-dolly --grouped
 	 *
-	 *     # Generate report with custom rules file.
-	 *     $ wp pcp-report hello-dolly --rules=/path/to/custom-rules.json
+	 *     # Generate report with custom group configuration file.
+	 *     $ wp pcp-report hello-dolly --group-config=/path/to/custom-groups.json
 	 *
 	 *     # Get report path only.
-	 *     $ wp pcp-report hello-dolly --porcelain=path
+	 *     $ wp pcp-report hello-dolly --porcelain
 	 *
 	 * @param array $args       Indexed array of positional arguments.
 	 * @param array $assoc_args Associative array of options.
@@ -170,26 +170,26 @@ class Report_Command {
 			'fields' => 'file,line,column,type,code,message,docs',
 		];
 
-		$porcelain_mode  = Utils\get_flag_value( $assoc_args, 'porcelain', false );
-		$grouped_mode    = Utils\get_flag_value( $assoc_args, 'grouped', false );
-		$open_in_browser = Utils\get_flag_value( $assoc_args, 'open', false );
-		$rules_file      = Utils\get_flag_value( $assoc_args, 'rules', '' );
+		$porcelain_mode    = Utils\get_flag_value( $assoc_args, 'porcelain', false );
+		$grouped_mode      = Utils\get_flag_value( $assoc_args, 'grouped', false );
+		$open_in_browser   = Utils\get_flag_value( $assoc_args, 'open', false );
+		$group_config_file = Utils\get_flag_value( $assoc_args, 'group-config', '' );
 
-		// Set custom rules file if provided.
-		if ( ! empty( $rules_file ) ) {
-			// Validate the custom rules file using JSON_Utils.
-			$rules_data = JSON_Utils::read_json( $rules_file );
-			if ( is_wp_error( $rules_data ) ) {
-				WP_CLI::error( sprintf( 'Invalid custom rules file: %s', $rules_data->get_error_message() ) );
+		// Set custom group configuration file if provided.
+		if ( ! empty( $group_config_file ) ) {
+			// Validate the custom group configuration file using JSON_Utils.
+			$group_config_data = JSON_Utils::read_json( $group_config_file );
+			if ( is_wp_error( $group_config_data ) ) {
+				WP_CLI::error( sprintf( 'Invalid custom group configuration file: %s', $group_config_data->get_error_message() ) );
 			}
 
-			$this->custom_rules_file = $rules_file;
+			$this->custom_rules_file = $group_config_file;
 		}
 
 		unset( $assoc_args['porcelain'] );
 		unset( $assoc_args['grouped'] );
 		unset( $assoc_args['open'] );
-		unset( $assoc_args['rules'] );
+		unset( $assoc_args['group-config'] );
 
 		$check_args = array_merge( $assoc_args, $check_args );
 

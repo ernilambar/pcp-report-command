@@ -1,0 +1,123 @@
+name: Behat Testing
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/behat-test.yml'
+      - '**.php'
+      - '**.feature'
+      - 'behat.yml'
+      - 'composer.json'
+      - 'composer.lock'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/behat-test.yml'
+      - '**.php'
+      - '**.feature'
+      - 'behat.yml'
+      - 'composer.json'
+      - 'composer.lock'
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  behat-test:
+    name: PHP ${{ matrix.php }} - WP ${{ matrix.wordpress }}${{ matrix.experimental && ' (experimental)' || '' }}
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental == true }}
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.0
+        ports:
+        - 3306/tcp
+        options: >-
+          --health-cmd "mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+          -e MYSQL_ROOT_PASSWORD=root
+          -e MYSQL_DATABASE=wp_cli_test
+          --entrypoint sh mysql:8.0
+          -c "exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"
+
+    strategy:
+      fail-fast: true
+      matrix:
+        php:
+        - '7.4'
+        wordpress: [ 'latest' ]
+        include:
+          - php: '7.4'
+            wordpress: 'latest'
+          - php: '8.4'
+            wordpress: 'trunk'
+            experimental: true
+    env:
+      WP_ENV_PHP_VERSION: ${{ matrix.php }}
+      WP_ENV_CORE: ${{ matrix.wordpress == 'trunk' && 'WordPress/WordPress' || format( 'https://wordpress.org/wordpress-{0}.zip', matrix.wordpress ) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          extensions: mysql
+          tools: composer
+          php-version: ${{ matrix.php }}
+          ini-values: pcov.directory=.,pcov.exclude=~(vendor|tests)~
+
+      - name: Install PHP dependencies
+        uses: ramsey/composer-install@57532f8be5bda426838819c5ee9afb8af389d51a
+        with:
+          composer-options: '--prefer-dist'
+
+      - name: Make Composer packages available globally
+        run: |
+          echo "${PWD}/vendor/bin" >> $GITHUB_PATH
+
+      - name: Install WP-CLI
+        run: |
+          curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          chmod +x wp-cli.phar
+          mkdir -p bin
+          mv wp-cli.phar bin/wp
+          echo "WP_CLI_BIN_DIR=${PWD}/bin" >> $GITHUB_ENV
+
+      - name: Start MySQL server
+        run: sudo systemctl start mysql
+
+      - name: Configure DB environment
+        run: |
+          echo "MYSQL_HOST=127.0.0.1" >> $GITHUB_ENV
+          echo "MYSQL_TCP_PORT=${{ job.services.mysql.ports['3306'] }}" >> $GITHUB_ENV
+          echo "WP_CLI_TEST_DBROOTUSER=root" >> $GITHUB_ENV
+          echo "WP_CLI_TEST_DBROOTPASS=root" >> $GITHUB_ENV
+          echo "WP_CLI_TEST_DBNAME=wp_cli_test" >> $GITHUB_ENV
+          echo "WP_CLI_TEST_DBUSER=wp_cli_test" >> $GITHUB_ENV
+          echo "WP_CLI_TEST_DBPASS=password1" >> $GITHUB_ENV
+          echo "WP_CLI_TEST_DBHOST=127.0.0.1:${{ job.services.mysql.ports['3306'] }}" >> $GITHUB_ENV
+
+      - name: Prepare test database
+        run: composer prepare-behat-tests
+
+      - name: Check Behat environment
+        run: composer behat
+        env:
+          WP_CLI_TEST_DEBUG_BEHAT_ENV: 1
+
+      - name: Run tests
+        run: composer behat || composer behat-rerun

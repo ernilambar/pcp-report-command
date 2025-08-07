@@ -1,0 +1,22 @@
+name: Gherkin Linting
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  gherkin-lint:
+    name: Lint Gherkin Feature files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+
+      - name: Run lint
+        run: npx --yes gherkin-lint

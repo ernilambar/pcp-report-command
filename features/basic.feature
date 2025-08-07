@@ -34,5 +34,3 @@ Feature: Basic setup
       """
       Plugin Check is not installed/activated.
       """
-
-

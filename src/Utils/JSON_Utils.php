@@ -74,6 +74,7 @@ class JSON_Utils {
 		return ( JSON_ERROR_NONE === json_last_error() );
 	}
 
+
 	/**
 	 * Validates a JSON string against a given schema file.
 	 *

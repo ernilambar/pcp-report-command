@@ -195,16 +195,8 @@ Feature: Check report
       }
       """
 
-    When I run `wp eval 'echo WP_CLI\Utils\get_cache_dir() . "/pcp-report";'`
-    Then STDOUT should contain:
-      """
-      wp-cli/cache/pcp-report
-      """
-    And save STDOUT as {PCP_REPORTS_DIR}
-
     When I try `wp pcp-report foo-sample --grouped --group-config=custom-group-config.json`
     And STDERR should contain:
       """
-      ghanta
+      Invalid group configuration file: JSON validation failed
       """
-

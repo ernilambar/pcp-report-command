@@ -9,8 +9,7 @@ declare(strict_types=1);
 
 namespace Nilambar\PCP_Report_Command\Utils;
 
-use Exception;
-use JsonSchema\Validator;
+use WP_CLI;
 
 /**
  * Group_Utils class.
@@ -37,31 +36,17 @@ class Group_Utils {
 	 * @return array Array of group definitions.
 	 */
 	public static function get_group_details( string $rules_file ): array {
-		if ( ! file_exists( $rules_file ) ) {
-			return [];
+		// Read and validate the group configuration file.
+		$groups = JSON_Utils::read_json( $rules_file );
+		if ( is_wp_error( $groups ) ) {
+			WP_CLI::error( sprintf( 'Invalid group configuration file: %s', $groups->get_error_message() ) );
 		}
 
-		$validator = new Validator();
-
-		$json_content = file_get_contents( $rules_file );
-		$groups       = json_decode( $json_content, true );
-
-		if ( JSON_ERROR_NONE !== json_last_error() ) {
-			return [];
-		}
-
-		// Validate against schema if available.
-		$schema_file = dirname( dirname( $rules_file ) ) . '/data/groups-schema.json';
-		if ( file_exists( $schema_file ) ) {
-			$schema = json_decode( file_get_contents( $schema_file ), true );
-			if ( JSON_ERROR_NONE === json_last_error() ) {
-				$validation_result = self::validate_json_schema( $groups, $schema, $validator );
-				if ( ! $validation_result['valid'] ) {
-					// Log validation error but don't fail completely - use existing data.
-					error_log( 'Groups configuration validation failed: ' . $validation_result['error'] );
-					// Continue with existing data even if validation fails.
-				}
-			}
+		// Validate against schema.
+		$schema_file       = dirname( dirname( __DIR__ ) ) . '/data/groups-schema.json';
+		$validation_result = JSON_Utils::validate_json_with_schema( json_encode( $groups ), $schema_file );
+		if ( is_wp_error( $validation_result ) ) {
+			WP_CLI::error( sprintf( 'Invalid group configuration file: %s', $validation_result->get_error_message() ) );
 		}
 
 		// Process groups and their children.
@@ -111,66 +96,6 @@ class Group_Utils {
 		return $processed_groups;
 	}
 
-	/**
-	 * Validates JSON data against a JSON schema using jsonrainbow/json-schema library.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array     $data      Data to validate.
-	 * @param array     $schema    Schema to validate against.
-	 * @param Validator $validator JSON Schema validator instance.
-	 * @return array Validation result with 'valid' boolean and 'error' string.
-	 */
-	public static function validate_json_schema( array $data, array $schema, Validator $validator ): array {
-		try {
-			// Convert data and schema to objects for jsonrainbow/json-schema.
-			$data_object   = json_decode( wp_json_encode( $data ) );
-			$schema_object = json_decode( wp_json_encode( $schema ) );
-
-			// Validate data against schema.
-			$validator->validate( $data_object, $schema_object );
-
-			if ( $validator->isValid() ) {
-				return [
-					'valid' => true,
-					'error' => '',
-				];
-			}
-
-			// Collect validation errors.
-			$errors           = [];
-			$validator_errors = $validator->getErrors();
-
-			if ( is_array( $validator_errors ) ) {
-				foreach ( $validator_errors as $error ) {
-					if ( is_array( $error ) ) {
-						$property = $error['property'] ?? '';
-						$message  = $error['message'] ?? '';
-					} else {
-						$property = '';
-						$message  = (string) $error;
-					}
-
-					if ( ! empty( $property ) ) {
-						$errors[] = "{$property}: {$message}";
-					} else {
-						$errors[] = $message;
-					}
-				}
-			}
-
-			return [
-				'valid' => false,
-				'error' => implode( '; ', $errors ),
-			];
-
-		} catch ( Exception $e ) {
-			return [
-				'valid' => false,
-				'error' => 'Schema validation error: ' . $e->getMessage(),
-			];
-		}
-	}
 
 	/**
 	 * Gets the category ID for an issue based on its code.

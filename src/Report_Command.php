@@ -195,7 +195,7 @@ class Report_Command {
 
 		// Set custom group configuration file if provided.
 		if ( ! empty( $group_config_file ) ) {
-			// Validate the custom group configuration file using JSON_Utils.
+			// Validate that the file exists and is readable.
 			$group_config_data = JSON_Utils::read_json( $group_config_file );
 			if ( is_wp_error( $group_config_data ) ) {
 				WP_CLI::error( sprintf( 'Invalid custom group configuration file: %s', $group_config_data->get_error_message() ) );

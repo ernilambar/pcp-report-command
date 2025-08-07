@@ -10,7 +10,7 @@ Quick links: [Using](#using) | [Installing](#installing)
 ## Using
 
 ~~~
-wp pcp-report <plugin> [--slug=<slug>] [--checks=<checks>] [--exclude-checks=<checks>] [--ignore-codes=<codes>] [--categories] [--ignore-warnings] [--ignore-errors] [--include-experimental] [--exclude-directories=<directories>] [--exclude-files=<files>] [--severity=<severity>] [--error-severity=<error-severity>] [--warning-severity=<warning-severity>] [--grouped] [--open] [--porcelain] [--rules=<rules>]
+wp pcp-report <plugin> [--slug=<slug>] [--checks=<checks>] [--exclude-checks=<checks>] [--ignore-codes=<codes>] [--categories] [--ignore-warnings] [--ignore-errors] [--include-experimental] [--exclude-directories=<directories>] [--exclude-files=<files>] [--severity=<severity>] [--error-severity=<error-severity>] [--warning-severity=<warning-severity>] [--grouped] [--open] [--porcelain] [--group-config=<group-config>]
 ~~~
 
 **OPTIONS**
@@ -68,8 +68,8 @@ wp pcp-report <plugin> [--slug=<slug>] [--checks=<checks>] [--exclude-checks=<ch
 	[--porcelain]
 		Output just the report file path.
 
-	[--rules=<rules>]
-		Path to custom rules JSON file for grouping plugin check issues.
+	[--group-config=<group-config>]
+		Path to custom group configuration JSON file for grouping plugin check issues.
 
 **EXAMPLES**
 
@@ -79,8 +79,8 @@ wp pcp-report <plugin> [--slug=<slug>] [--checks=<checks>] [--exclude-checks=<ch
     # Generate grouped report.
     $ wp pcp-report hello-dolly --grouped
 
-    # Generate report with custom rules file.
-    $ wp pcp-report hello-dolly --rules=/path/to/custom-rules.json
+    # Generate report with custom group configuration file.
+    $ wp pcp-report hello-dolly --group-config=/path/to/custom-groups.json
 
     # Get report path only.
     $ wp pcp-report hello-dolly --porcelain

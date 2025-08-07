@@ -55,6 +55,13 @@ Feature: Check report
       WordPress.WP.AlternativeFunctions.rand_mt_rand
       """
 
+    When I run `wp pcp-report foo-sample --porcelain`
+    Then the return code should be 0
+    And STDOUT should be:
+      """
+      {PCP_REPORTS_DIR}/foo-sample.html
+      """
+
   Scenario: Report generation with custom group configuration
     Given a WP install
     And these installed and active plugins:

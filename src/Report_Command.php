@@ -24,13 +24,13 @@ use WP_CLI\Utils;
 class Report_Command {
 
 	/**
-	 * Group rules file.
+	 * Group configuration file.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @var string
 	 */
-	private $rules_file;
+	private $group_config_file;
 
 	/**
 	 * Reports folder path.
@@ -51,13 +51,13 @@ class Report_Command {
 	private $templates_folder;
 
 	/**
-	 * Custom rules file path.
+	 * Custom group configuration file path.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @var string|null
 	 */
-	private $custom_rules_file;
+	private $custom_group_config_file;
 
 	/**
 	 * Constructor.
@@ -65,10 +65,10 @@ class Report_Command {
 	 * @since 1.0.0
 	 */
 	public function __construct() {
-		$this->rules_file        = dirname( __DIR__ ) . '/data/groups.json';
-		$this->reports_folder    = $this->get_reports_folder();
-		$this->templates_folder  = dirname( __DIR__ ) . '/templates';
-		$this->custom_rules_file = null;
+		$this->group_config_file        = dirname( __DIR__ ) . '/data/groups.json';
+		$this->reports_folder           = $this->get_reports_folder();
+		$this->templates_folder         = dirname( __DIR__ ) . '/templates';
+		$this->custom_group_config_file = null;
 	}
 
 	/**
@@ -183,7 +183,7 @@ class Report_Command {
 				WP_CLI::error( sprintf( 'Invalid custom group configuration file: %s', $group_config_data->get_error_message() ) );
 			}
 
-			$this->custom_rules_file = $group_config_file;
+			$this->custom_group_config_file = $group_config_file;
 		}
 
 		unset( $assoc_args['porcelain'] );
@@ -263,8 +263,8 @@ class Report_Command {
 	 * @return array Array of group definitions.
 	 */
 	public function get_group_info(): array {
-		$rules_file = $this->custom_rules_file ? $this->custom_rules_file : $this->rules_file;
-		return Group_Utils::get_group_details( $rules_file );
+		$group_config_file = $this->custom_group_config_file ? $this->custom_group_config_file : $this->group_config_file;
+		return Group_Utils::get_group_details( $group_config_file );
 	}
 
 	/**

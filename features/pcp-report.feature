@@ -52,7 +52,11 @@ Feature: Check report
     And the {PCP_REPORTS_DIR}/foo-sample.html file should exist
     And the {PCP_REPORTS_DIR}/foo-sample.html file should contain:
       """
-      WordPress.WP.AlternativeFunctions.rand_mt_rand
+      ERROR: WordPress.WP.AlternativeFunctions.rand_mt_rand
+      """
+    And the {PCP_REPORTS_DIR}/foo-sample.html file should contain:
+      """
+      ERROR: no_plugin_readme
       """
 
     When I run `wp pcp-report foo-sample --porcelain`
@@ -135,9 +139,9 @@ Feature: Check report
     And the {PCP_REPORTS_DIR}/foo-sample.html file should exist
     And the {PCP_REPORTS_DIR}/foo-sample.html file should contain:
       """
-      Security Issues
+      ## Security Issues
       """
     And the {PCP_REPORTS_DIR}/foo-sample.html file should contain:
       """
-      Performance Issues
+      ## Performance Issues
       """

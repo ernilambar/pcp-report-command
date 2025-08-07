@@ -152,6 +152,10 @@ class Report_Command {
 	public function __invoke( $args, $assoc_args = [] ) {
 		$plugin_slug = isset( $args[0] ) ? $args[0] : '';
 
+		if ( ! defined( 'WP_PLUGIN_CHECK_VERSION' ) ) {
+			WP_CLI::error( 'Plugin Check is not installed/activated.' );
+		}
+
 		$flags = [
 			'ignore-warnings',
 			'ignore-errors',

@@ -22,6 +22,7 @@
   },
   "require-dev": {
     "slevomat/coding-standard": "^8.15",
+    "wp-cli/extension-command": "^2.1",
     "wp-cli/scaffold-package-command": "^2",
     "wp-cli/wp-cli-tests": "^5"
   },

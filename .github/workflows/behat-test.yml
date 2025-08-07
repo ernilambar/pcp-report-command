@@ -23,10 +23,8 @@ on:
       - 'composer.json'
       - 'composer.lock'
     types:
-      - opened
-      - reopened
-      - synchronize
       - ready_for_review
+      - synchronize
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

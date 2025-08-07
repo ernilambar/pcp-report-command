@@ -23,7 +23,8 @@ on:
       - 'composer.json'
       - 'composer.lock'
     types:
-      - ready_for_review
+      - opened
+      - reopened
       - synchronize
 
 concurrency:

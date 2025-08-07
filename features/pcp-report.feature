@@ -1,6 +1,6 @@
 Feature: Check report
 
-  Scenario: Plugin Check is ready
+  Scenario: Report generation
     Given a WP install
     And these installed and active plugins:
       """
@@ -32,6 +32,13 @@ Feature: Check report
         );
       """
 
+    When I run `wp eval 'echo WP_CLI\Utils\get_cache_dir() . "/pcp-report";'`
+    Then STDOUT should contain:
+      """
+      wp-cli/cache/pcp-report
+      """
+    And save STDOUT as {PCP_REPORTS_DIR}
+
     When I run `wp pcp-report foo-sample`
     Then the return code should be 0
     And STDOUT should contain:
@@ -41,4 +48,9 @@ Feature: Check report
     And STDOUT should contain:
       """
       PCP report generated successfully.
+      """
+    And the {PCP_REPORTS_DIR}/foo-sample.html file should exist
+    And the {PCP_REPORTS_DIR}/foo-sample.html file should contain:
+      """
+      WordPress.WP.AlternativeFunctions.rand_mt_rand
       """

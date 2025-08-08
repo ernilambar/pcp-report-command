@@ -44,7 +44,7 @@ class Group_Utils {
 
 		// Validate against schema.
 		$schema_file       = dirname( dirname( __DIR__ ) ) . '/data/groups-schema.json';
-		$validation_result = JSON_Utils::validate_json_with_schema( json_encode( $groups ), $schema_file );
+		$validation_result = JSON_Utils::validate_json_data_with_schema( $groups, $schema_file );
 		if ( is_wp_error( $validation_result ) ) {
 			WP_CLI::error( sprintf( 'Invalid group configuration file: %s', $validation_result->get_error_message() ) );
 		}

@@ -60,6 +60,15 @@ class Report_Command {
 	private $custom_group_config_file;
 
 	/**
+	 * Report title.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string
+	 */
+	private $report_title;
+
+	/**
 	 * Constructor.
 	 *
 	 * @since 1.0.0
@@ -69,6 +78,7 @@ class Report_Command {
 		$this->reports_folder           = $this->get_reports_folder();
 		$this->templates_folder         = dirname( __DIR__ ) . '/templates';
 		$this->custom_group_config_file = null;
+		$this->report_title             = 'Plugin Check Report';
 	}
 
 	/**
@@ -81,6 +91,9 @@ class Report_Command {
 	 *
 	 * [--slug=<slug>]
 	 * : Slug to override the default.
+	 *
+	 * [--report-title=<title>]
+	 * : Custom title for the report. Use empty string to remove title. Default: 'Plugin Check Report'.
 	 *
 	 * [--checks=<checks>]
 	 * : Only runs checks provided as an argument in comma-separated values.
@@ -174,10 +187,15 @@ class Report_Command {
 		$grouped_mode      = Utils\get_flag_value( $assoc_args, 'grouped', false );
 		$open_in_browser   = Utils\get_flag_value( $assoc_args, 'open', false );
 		$group_config_file = Utils\get_flag_value( $assoc_args, 'group-config', '' );
+		$custom_title      = Utils\get_flag_value( $assoc_args, 'report-title', null );
+
+		if ( null !== $custom_title ) {
+			$this->report_title = $custom_title;
+		}
 
 		// Set custom group configuration file if provided.
 		if ( ! empty( $group_config_file ) ) {
-			// Validate the custom group configuration file using JSON_Utils.
+			// Validate that the file exists and is readable.
 			$group_config_data = JSON_Utils::read_json( $group_config_file );
 			if ( is_wp_error( $group_config_data ) ) {
 				WP_CLI::error( sprintf( 'Invalid custom group configuration file: %s', $group_config_data->get_error_message() ) );
@@ -292,7 +310,7 @@ class Report_Command {
 	 * @return string Report title.
 	 */
 	private function get_report_title(): string {
-		return 'Plugin Check Report';
+		return $this->report_title;
 	}
 
 	/**

@@ -75,7 +75,7 @@ class JSON_Utils {
 	}
 
 	/**
-	 * Validates a JSON string against a given schema file.
+	 * Validates a JSON string against a schema file.
 	 *
 	 * @since 1.0.0
 	 *
@@ -83,7 +83,30 @@ class JSON_Utils {
 	 * @param string $schema_file Path to the JSON schema file.
 	 * @return bool|WP_Error True if valid, WP_Error on failure.
 	 */
-	public static function validate_json_with_schema( string $json_string, string $schema_file ) {
+	public static function validate_json_string_with_schema( string $json_string, string $schema_file ) {
+		// Decode the JSON string to validate.
+		$data = json_decode( $json_string );
+		if ( ! self::is_valid_json( $json_string ) ) {
+			return new WP_Error(
+				'json_decode_error',
+				sprintf( 'JSON decode error: %s', json_last_error_msg() ),
+				[ 'json_string' => $json_string ]
+			);
+		}
+
+		return self::validate_json_data_with_schema( $data, $schema_file );
+	}
+
+	/**
+	 * Validates decoded JSON data against a JSON schema file.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param mixed  $data        The data to validate (usually array or object).
+	 * @param string $schema_file Path to the JSON schema file.
+	 * @return bool|WP_Error True if valid, WP_Error on failure.
+	 */
+	public static function validate_json_data_with_schema( $data, string $schema_file ) {
 		// Read the schema file using existing method.
 		$schema_data = self::read_json( $schema_file );
 		if ( is_wp_error( $schema_data ) ) {
@@ -94,21 +117,17 @@ class JSON_Utils {
 			);
 		}
 
-		// Decode the JSON string to validate.
-		$json_data = json_decode( $json_string, true );
-		if ( ! self::is_valid_json( $json_string ) ) {
-			return new WP_Error(
-				'json_decode_error',
-				sprintf( 'JSON decode error: %s', json_last_error_msg() ),
-				[ 'json_string' => $json_string ]
-			);
-		}
+		// Convert data to object for validation.
+		$json_data = json_decode( json_encode( $data ) );
 
 		try {
 			// Use the library for validation.
 			$validator = new Validator();
 
-			$validator->validate( $json_data, $schema_data );
+			// Convert schema to object too
+			$schema_object = json_decode( json_encode( $schema_data ) );
+
+			$validator->validate( $json_data, $schema_object );
 
 			if ( $validator->isValid() ) {
 				return true;

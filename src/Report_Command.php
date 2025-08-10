@@ -335,6 +335,15 @@ class Report_Command {
 			return $data;
 		}
 
+		// Remove /private prefix from file paths on macOS for all issues.
+		$issues = array_map(
+			function ( $issue ) {
+				$issue['file'] = ltrim( preg_replace( '|^/private|', '', $issue['file'] ), '/' );
+				return $issue;
+			},
+			$issues
+		);
+
 		// Prepare data based on mode.
 		if ( $grouped ) {
 			$data          = Group_Utils::prepare_grouped_data( $issues, $this->get_group_info() );

@@ -236,7 +236,7 @@ class Report_Command {
 
 		$stdout = $result_obj->stdout;
 
-		if ( empty( $stdout ) || str_contains( $stdout, 'Checks complete. No errors found.' ) ) {
+		if ( '[]' === $stdout || str_contains( $stdout, 'Checks complete. No errors found.' ) ) {
 			WP_CLI::success( 'No errors or warnings.' );
 			return;
 		}

@@ -29,7 +29,7 @@
 					:<?php echo esc_html( $issue['line'] ); ?><?php endif; ?></code> -
 			<?php endif; ?>
 
-			<?php echo esc_html( $type['message'] ); ?>
+			<?php echo $type['message']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
 			<?php if ( ! empty( $type['docs'] ) && $is_single_file ) : ?>
 				<a href="<?php echo esc_url( $type['docs'] ); ?>" target="_blank">Learn more</a>

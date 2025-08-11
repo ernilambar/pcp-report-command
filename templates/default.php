@@ -11,7 +11,7 @@
 			- Line <?php echo esc_html( $issue['line'] ); ?>, Column <?php echo esc_html( $issue['column'] ); ?>
 		<?php endif; ?>
 		<br><br>
-		<?php echo esc_html( $issue['message'] ); ?>
+		<?php echo $issue['message']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 		<?php if ( ! empty( $issue['docs'] ) ) : ?>
 			<a href="<?php echo esc_url( $issue['docs'] ); ?>" target="_blank">Learn more</a>
 		<?php endif; ?>

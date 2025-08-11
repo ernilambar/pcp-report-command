@@ -165,10 +165,6 @@ class Report_Command {
 	public function __invoke( $args, $assoc_args = [] ) {
 		$plugin_slug = isset( $args[0] ) ? $args[0] : '';
 
-		if ( Utils\get_flag_value( $assoc_args, 'slug', null ) ) {
-			$plugin_slug = Utils\get_flag_value( $assoc_args, 'slug', null );
-		}
-
 		if ( ! defined( 'WP_PLUGIN_CHECK_VERSION' ) ) {
 			WP_CLI::error( 'Plugin Check is not installed/activated.' );
 		}
@@ -256,7 +252,13 @@ class Report_Command {
 			WP_CLI::error( 'Could not create reports folder.' );
 		}
 
-		$report_file = "{$reports_folder}/{$plugin_slug}.html";
+		$target_file_name = $plugin_slug;
+
+		if ( Utils\get_flag_value( $assoc_args, 'slug', null ) ) {
+			$target_file_name = Utils\get_flag_value( $assoc_args, 'slug', null );
+		}
+
+		$report_file = "{$reports_folder}/{$target_file_name}.html";
 
 		$status = File_Utils::create_file( $report_file, $html_content );
 

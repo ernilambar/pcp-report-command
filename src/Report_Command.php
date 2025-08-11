@@ -252,10 +252,14 @@ class Report_Command {
 			WP_CLI::error( 'Could not create reports folder.' );
 		}
 
-		$target_file_name = $plugin_slug;
+		$target_file_name = '';
 
 		if ( Utils\get_flag_value( $assoc_args, 'slug', null ) ) {
 			$target_file_name = Utils\get_flag_value( $assoc_args, 'slug', null );
+		}
+
+		if ( empty( $target_file_name ) ) {
+			$target_file_name = $this->get_html_file_name( $plugin_slug );
 		}
 
 		$report_file = "{$reports_folder}/{$target_file_name}.html";
@@ -402,6 +406,52 @@ class Report_Command {
 	private function get_html_content( array $data, string $type = 'default' ): string {
 		$template_path = "{$this->templates_folder}/{$type}.php";
 		return Template_Utils::render( $template_path, $data );
+	}
+
+	/**
+	 * Gets HTML file name from plugin slug.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $plugin_slug Plugin slug or URL.
+	 * @return string Sanitized file name.
+	 */
+	private function get_html_file_name( $plugin_slug ) {
+		$slug = $plugin_slug;
+
+		if ( filter_var( $slug, FILTER_VALIDATE_URL ) ) {
+			// Handle URLs.
+			if ( false !== strpos( $slug, 'downloads.wordpress.org/plugin/' ) ) {
+				// WordPress.org download URLs.
+				$path = parse_url( $slug, PHP_URL_PATH );
+
+				if ( $path ) {
+					$filename = basename( $path );
+					$slug     = preg_replace( '/\.\d+(\.\d+)*\.zip$/', '', $filename );
+				}
+			} elseif ( false !== strpos( $slug, '#wporgapi' ) ) {
+				// Special URLs with #wporgapi.
+				$path = parse_url( $slug, PHP_URL_PATH );
+
+				if ( $path ) {
+					$filename = basename( $path );
+					$slug     = preg_replace( '/^\d+_\d+-\d+-\d+_/', '', $filename );
+					$slug     = preg_replace( '/\.zip$/', '', $slug );
+				}
+			} elseif ( false !== strpos( $slug, '.zip' ) ) {
+				$path = parse_url( $slug, PHP_URL_PATH );
+
+				if ( $path ) {
+					$filename = basename( $path );
+					$slug     = preg_replace( '/\.zip$/', '', $filename );
+				}
+			}
+		} elseif ( false !== strpos( $slug, '/' ) ) {
+			// Handle full file paths.
+			$slug = basename( rtrim( $slug, '/' ) );
+		}
+
+		return sanitize_file_name( strtolower( $slug ) );
 	}
 
 	/**

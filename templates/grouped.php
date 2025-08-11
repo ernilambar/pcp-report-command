@@ -12,12 +12,12 @@
 			<strong><?php echo esc_html( $type['type'] ); ?>: <?php echo esc_html( $type['code'] ); ?></strong><br><br>
 
 			<?php
-			$issue_count         = count( $type['issues'] );
-			$is_single_file      = 1 === $issue_count;
-			$has_multiple_files  = $issue_count > 1;
-			$max_displayed       = 3;
-			$displayed_issues    = array_slice( $type['issues'], 0, $max_displayed );
-			$has_more_than_three = $issue_count > $max_displayed;
+			$issue_count        = count( $type['issues'] );
+			$is_single_file     = 1 === $issue_count;
+			$has_multiple_files = $issue_count > 1;
+			$max_displayed      = 4;
+			$displayed_issues   = array_slice( $type['issues'], 0, $max_displayed );
+			$has_more_than_max  = $issue_count > $max_displayed;
 			?>
 
 			<?php if ( $is_single_file ) : ?>
@@ -52,7 +52,7 @@
 				?>
 				<pre><code><?php echo $files_output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></code></pre>
 
-				<?php if ( $has_more_than_three ) : ?>
+				<?php if ( $has_more_than_max ) : ?>
 					… out of a total of <?php echo esc_html( $issue_count ); ?> incidences.<br><br>
 				<?php endif; ?>
 

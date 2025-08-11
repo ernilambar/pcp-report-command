@@ -10,7 +10,7 @@ Quick links: [Using](#using) | [Installing](#installing)
 ## Using
 
 ~~~
-wp pcp-report <plugin> [--slug=<slug>] [--checks=<checks>] [--exclude-checks=<checks>] [--ignore-codes=<codes>] [--categories] [--ignore-warnings] [--ignore-errors] [--include-experimental] [--exclude-directories=<directories>] [--exclude-files=<files>] [--severity=<severity>] [--error-severity=<error-severity>] [--warning-severity=<warning-severity>] [--grouped] [--open] [--porcelain] [--group-config=<group-config>]
+wp pcp-report <plugin> [--slug=<slug>] [--report-title=<title>] [--checks=<checks>] [--exclude-checks=<checks>] [--ignore-codes=<codes>] [--categories] [--ignore-warnings] [--ignore-errors] [--include-experimental] [--exclude-directories=<directories>] [--exclude-files=<files>] [--severity=<severity>] [--error-severity=<error-severity>] [--warning-severity=<warning-severity>] [--grouped] [--open] [--porcelain] [--group-config=<group-config>]
 ~~~
 
 **OPTIONS**
@@ -20,6 +20,9 @@ wp pcp-report <plugin> [--slug=<slug>] [--checks=<checks>] [--exclude-checks=<ch
 
 	[--slug=<slug>]
 		Slug to override the default.
+
+	[--report-title=<title>]
+		Custom title for the report. Use empty string to remove title. Default: 'Plugin Check Report'.
 
 	[--checks=<checks>]
 		Only runs checks provided as an argument in comma-separated values.

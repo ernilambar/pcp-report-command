@@ -64,8 +64,12 @@
     "behat": "run-behat-tests",
     "behat-rerun": "rerun-behat-tests",
     "format": "run-phpcbf-cleanup",
-    "lint": "run-linter-tests",
+    "lint": [
+      "run-linter-tests",
+      "@phpcs"
+    ],
     "phpcs": "run-phpcs-tests",
+    "phpstan": "run-phpstan-tests",
     "phpunit": "run-php-unit-tests",
     "prepare-behat-tests": "install-package-tests",
     "readme": "./vendor/bin/wp scaffold package-readme . --force --branch=main",

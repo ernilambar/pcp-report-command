@@ -19,7 +19,7 @@
     }
   ],
   "no-dupe-feature-names": "on",
-  "no-dupe-scenario-names": "off",
+  "no-dupe-scenario-names": "on",
   "no-empty-file": "on",
   "no-files-without-scenarios": "on",
   "no-multiple-empty-lines": "on",

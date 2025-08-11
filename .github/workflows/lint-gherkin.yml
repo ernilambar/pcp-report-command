@@ -2,10 +2,24 @@ name: Gherkin Linting
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.feature'
   pull_request:
     branches:
       - main
-      - master
+    paths:
+      - '**.feature'
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   gherkin-lint:

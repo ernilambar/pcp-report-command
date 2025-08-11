@@ -1,6 +1,6 @@
 Feature: Basic setup
 
-  Scenario: Basic check
+  Scenario: Basic check requirements
     Given a WP install
     And a wp-content/plugins/foo-sample/foo-sample.php file:
       """

@@ -423,7 +423,7 @@ class Report_Command {
 			// Handle URLs.
 			if ( false !== strpos( $slug, 'downloads.wordpress.org/plugin/' ) ) {
 				// WordPress.org download URLs.
-				$path = parse_url( $slug, PHP_URL_PATH );
+				$path = wp_parse_url( $slug, PHP_URL_PATH );
 
 				if ( $path ) {
 					$filename = basename( $path );
@@ -431,7 +431,7 @@ class Report_Command {
 				}
 			} elseif ( false !== strpos( $slug, '#wporgapi' ) ) {
 				// Special URLs with #wporgapi.
-				$path = parse_url( $slug, PHP_URL_PATH );
+				$path = wp_parse_url( $slug, PHP_URL_PATH );
 
 				if ( $path ) {
 					$filename = basename( $path );
@@ -439,7 +439,7 @@ class Report_Command {
 					$slug     = preg_replace( '/\.zip$/', '', $slug );
 				}
 			} elseif ( false !== strpos( $slug, '.zip' ) ) {
-				$path = parse_url( $slug, PHP_URL_PATH );
+				$path = wp_parse_url( $slug, PHP_URL_PATH );
 
 				if ( $path ) {
 					$filename = basename( $path );

@@ -68,6 +68,17 @@ Feature: Check report
       {PCP_REPORTS_DIR}/foo-sample.html
       """
 
+    When I run `wp pcp-report foo-sample --slug=my-custom-slug`
+    Then the return code should be 0
+    And STDOUT should contain:
+      """
+      wp-cli/cache/pcp-report/my-custom-slug.html
+      """
+    And STDOUT should contain:
+      """
+      PCP report generated successfully.
+      """
+
   Scenario: Report generation with custom group configuration
     Given a wp-content/plugins/foo-sample/foo-sample.php file:
       """

@@ -7,7 +7,7 @@ Feature: Check report
       plugin-check
       """
 
-  Scenario: Report generation
+  Scenario: Report generation for plugin check
     Given a wp-content/plugins/foo-sample/foo-sample.php file:
       """
       <?php

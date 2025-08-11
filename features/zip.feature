@@ -7,7 +7,7 @@ Feature: Check report of plugin from ZIP source
       plugin-check
       """
 
-  Scenario: Report generation
+  Scenario: Report generation for plugin from external source
     When I run `wp eval 'echo WP_CLI\Utils\get_cache_dir() . "/pcp-report";'`
     Then STDOUT should contain:
       """

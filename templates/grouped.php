@@ -13,7 +13,7 @@
 
 			<?php
 			$issue_count         = count( $type['issues'] );
-			$is_single_file      = $issue_count === 1;
+			$is_single_file      = 1 === $issue_count;
 			$has_multiple_files  = $issue_count > 1;
 			$max_displayed       = 3;
 			$displayed_issues    = array_slice( $type['issues'], 0, $max_displayed );
@@ -26,10 +26,10 @@
 				<?php
 				if ( $issue['has_location'] ) :
 					?>
-					:<?php echo $issue['line']; ?><?php endif; ?></code> -
+					:<?php echo esc_html( $issue['line'] ); ?><?php endif; ?></code> -
 			<?php endif; ?>
 
-			<?php echo $type['message']; ?>
+			<?php echo esc_html( $type['message'] ); ?>
 
 			<?php if ( ! empty( $type['docs'] ) && $is_single_file ) : ?>
 				<a href="<?php echo esc_url( $type['docs'] ); ?>" target="_blank">Learn more</a>
@@ -39,18 +39,21 @@
 			<?php if ( $has_multiple_files ) : ?>
 				<?php
 				$files_output = '';
+
 				foreach ( $displayed_issues as $issue ) {
 					$files_output .= esc_html( $issue['file'] );
+
 					if ( $issue['has_location'] ) {
-						$files_output .= ':' . $issue['line'];
+						$files_output .= ':' . esc_html( $issue['line'] );
 					}
+
 					$files_output .= "\n";
 				}
 				?>
-				<pre><code><?php echo $files_output; ?></code></pre>
+				<pre><code><?php echo $files_output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></code></pre>
 
 				<?php if ( $has_more_than_three ) : ?>
-					… out of a total of <?php echo $issue_count; ?> incidences.<br><br>
+					… out of a total of <?php echo esc_html( $issue_count ); ?> incidences.<br><br>
 				<?php endif; ?>
 
 				<?php if ( ! empty( $type['docs'] ) ) : ?>
@@ -62,6 +65,4 @@
 
 		<br><br>
 	<?php endforeach; ?>
-<?php else : ?>
-	<p>No issues found.</p>
 <?php endif; ?>

@@ -209,5 +209,5 @@ Feature: Check report
     When I try `wp pcp-report foo-sample --grouped --group-config=custom-group-config.json`
     And STDERR should contain:
       """
-      Invalid group configuration file: JSON validation failed
+      Invalid group configuration file:
       """

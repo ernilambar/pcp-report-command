@@ -207,8 +207,15 @@ class Report_Command {
 		if ( ! empty( $group_config_file ) ) {
 			// Validate that the file exists and is readable.
 			try {
-				$group_config_data              = JsonUtils::readJson( $group_config_file );
+				JsonUtils::readJson( $group_config_file );
 				$this->custom_group_config_file = $group_config_file;
+
+				// Validate the configuration immediately to catch schema errors early.
+				$this->classifier = new Classifier( $group_config_file );
+				if ( ! $this->classifier->isValid() ) {
+					$error_message = $this->classifier->getValidationError();
+					WP_CLI::error( sprintf( 'Invalid group configuration file: %s', $error_message ) );
+				}
 			} catch ( \Exception $e ) {
 				WP_CLI::error( sprintf( 'Invalid custom group configuration file: %s', $e->getMessage() ) );
 			}
@@ -301,15 +308,14 @@ class Report_Command {
 	 * @return array Array of group definitions.
 	 */
 	public function get_group_info(): array {
-		$group_config_file = $this->custom_group_config_file ? $this->custom_group_config_file : $this->group_config_file;
-
-		try {
-			$this->classifier = new Classifier( $group_config_file );
-			// Return empty array as the classifier handles the configuration internally.
-			return [];
-		} catch ( \Exception $e ) {
-			WP_CLI::error( sprintf( 'Invalid group configuration file: %s', $e->getMessage() ) );
+		// If we don't have a classifier yet, create one for the default config.
+		if ( null === $this->classifier ) {
+			$group_config_file = $this->custom_group_config_file ? $this->custom_group_config_file : $this->group_config_file;
+			$this->classifier  = new Classifier( $group_config_file );
 		}
+
+		// Return empty array as the classifier handles the configuration internally.
+		return [];
 	}
 
 	/**
@@ -429,8 +435,17 @@ class Report_Command {
 			}
 		}
 
+		// Get the group configuration to access titles.
+		$group_config_file = $this->custom_group_config_file ? $this->custom_group_config_file : $this->group_config_file;
+		$group_config      = [];
+		try {
+			$group_config = JsonUtils::readJson( $group_config_file );
+		} catch ( \Exception $e ) {
+			WP_CLI::error( sprintf( 'Failed to read group configuration: %s', $e->getMessage() ) );
+		}
+
 		// Use the classifier to group the data.
-		$grouped_data = $this->classifier->classify( $issues, 'code' );
+		$grouped_data = $this->classifier->classify( $issues );
 
 		// Transform the grouped data to match the expected template format.
 		$categories = [];
@@ -486,8 +501,13 @@ class Report_Command {
 			}
 
 			if ( ! empty( $types ) ) {
-				$category_name = 'ungrouped' === $group_id ? 'Misc Issues' : ucfirst( str_replace( '_', ' ', $group_id ) );
-				$categories[]  = [
+				// Get the proper category name from the group configuration.
+				$category_name = 'Misc Issues';
+				if ( 'ungrouped' !== $group_id && isset( $group_config[ $group_id ]['title'] ) ) {
+					$category_name = $group_config[ $group_id ]['title'];
+				}
+
+				$categories[] = [
 					'name'  => $category_name,
 					'types' => $types,
 				];

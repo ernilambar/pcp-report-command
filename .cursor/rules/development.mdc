@@ -35,6 +35,7 @@ alwaysApply: true
   - Inline comments in any type of files should start with capital letter and end with period character.
   - PHP doc description should be concise.
   - Prefer since tag in PHP doc. Use "1.0.0" if does not exist. ALWAYS check for missing @since tags in PHPDoc blocks and add them where appropriate.
+  - Always use `use` import statements for PHP classes instead of fully qualified class names (e.g., `use WP_Error;` instead of `\WP_Error`, `use WP_Query;` instead of `\WP_Query`, etc.).
 
   Dependencies
   - WordPress (latest stable version)

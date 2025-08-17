@@ -7,9 +7,9 @@
 
 namespace Nilambar\PCP_Report_Command;
 
+use Nilambar\Classifier\Classifier;
+use Nilambar\Classifier\Utils\JsonUtils;
 use Nilambar\PCP_Report_Command\Utils\File_Utils;
-use Nilambar\PCP_Report_Command\Utils\Group_Utils;
-use Nilambar\PCP_Report_Command\Utils\JSON_Utils;
 use Nilambar\PCP_Report_Command\Utils\Template_Utils;
 use WP_CLI;
 use WP_CLI\Utils;
@@ -69,6 +69,15 @@ class Report_Command {
 	private $report_title;
 
 	/**
+	 * Classifier instance.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var Classifier|null
+	 */
+	private $classifier;
+
+	/**
 	 * Constructor.
 	 *
 	 * @since 1.0.0
@@ -79,6 +88,7 @@ class Report_Command {
 		$this->templates_folder         = dirname( __DIR__ ) . '/templates';
 		$this->custom_group_config_file = null;
 		$this->report_title             = 'Plugin Check Report';
+		$this->classifier               = null;
 	}
 
 	/**
@@ -196,12 +206,12 @@ class Report_Command {
 		// Set custom group configuration file if provided.
 		if ( ! empty( $group_config_file ) ) {
 			// Validate that the file exists and is readable.
-			$group_config_data = JSON_Utils::read_json( $group_config_file );
-			if ( is_wp_error( $group_config_data ) ) {
-				WP_CLI::error( sprintf( 'Invalid custom group configuration file: %s', $group_config_data->get_error_message() ) );
+			try {
+				$group_config_data              = JsonUtils::readJson( $group_config_file );
+				$this->custom_group_config_file = $group_config_file;
+			} catch ( \Exception $e ) {
+				WP_CLI::error( sprintf( 'Invalid custom group configuration file: %s', $e->getMessage() ) );
 			}
-
-			$this->custom_group_config_file = $group_config_file;
 		}
 
 		unset( $assoc_args['porcelain'] );
@@ -292,7 +302,14 @@ class Report_Command {
 	 */
 	public function get_group_info(): array {
 		$group_config_file = $this->custom_group_config_file ? $this->custom_group_config_file : $this->group_config_file;
-		return Group_Utils::get_group_details( $group_config_file );
+
+		try {
+			$this->classifier = new Classifier( $group_config_file );
+			// Return empty array as the classifier handles the configuration internally.
+			return [];
+		} catch ( \Exception $e ) {
+			WP_CLI::error( sprintf( 'Invalid group configuration file: %s', $e->getMessage() ) );
+		}
 	}
 
 	/**
@@ -336,7 +353,7 @@ class Report_Command {
 		$data = [];
 
 		// Validate JSON and decode.
-		if ( ! JSON_Utils::is_valid_json( $json_data ) ) {
+		if ( ! JsonUtils::isValidJson( $json_data ) ) {
 			return $data;
 		}
 
@@ -356,7 +373,7 @@ class Report_Command {
 
 		// Prepare data based on mode.
 		if ( $grouped ) {
-			$data          = Group_Utils::prepare_grouped_data( $issues, $this->get_group_info() );
+			$data          = $this->prepare_grouped_data( $issues );
 			$data['title'] = $this->get_report_title();
 		} else {
 			$data = $this->prepare_simple_data( $issues );
@@ -391,6 +408,94 @@ class Report_Command {
 				},
 				$issues
 			),
+		];
+	}
+
+	/**
+	 * Prepares grouped data for template rendering using the classifier package.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $issues Array of issues from plugin check.
+	 * @return array Prepared grouped data array for template rendering.
+	 */
+	private function prepare_grouped_data( array $issues ): array {
+		if ( null === $this->classifier ) {
+			$group_config_file = $this->custom_group_config_file ? $this->custom_group_config_file : $this->group_config_file;
+			try {
+				$this->classifier = new Classifier( $group_config_file );
+			} catch ( \Exception $e ) {
+				WP_CLI::error( sprintf( 'Invalid group configuration file: %s', $e->getMessage() ) );
+			}
+		}
+
+		// Use the classifier to group the data.
+		$grouped_data = $this->classifier->classify( $issues, 'code' );
+
+		// Transform the grouped data to match the expected template format.
+		$categories = [];
+
+		foreach ( $grouped_data as $group_id => $group_issues ) {
+			if ( empty( $group_issues ) ) {
+				continue;
+			}
+
+			$category_data = [
+				'errors'   => [],
+				'warnings' => [],
+			];
+
+			// Process each issue in the group.
+			foreach ( $group_issues as $issue ) {
+				$code = $issue['code'];
+				$type = strtolower( $issue['type'] );
+
+				// Only process error and warning types.
+				if ( ! in_array( $type, [ 'error', 'warning' ], true ) ) {
+					continue;
+				}
+
+				$file_data = [
+					'file'         => esc_html( $issue['file'] ),
+					'line'         => $issue['line'],
+					'column'       => $issue['column'],
+					'has_location' => ( $issue['line'] > 0 ),
+				];
+
+				$type_key = $type . 's'; // Errors or warnings.
+
+				if ( ! isset( $category_data[ $type_key ][ $code ] ) ) {
+					$category_data[ $type_key ][ $code ] = [
+						'type'    => strtoupper( $type ),
+						'code'    => esc_html( $code ),
+						'message' => Template_Utils::format_message( $issue['message'] ),
+						'docs'    => $issue['docs'] ?? null,
+						'issues'  => [],
+					];
+				}
+				$category_data[ $type_key ][ $code ]['issues'][] = $file_data;
+			}
+
+			// Build the category with types.
+			$types = [];
+			if ( ! empty( $category_data['errors'] ) ) {
+				$types = array_merge( $types, array_values( $category_data['errors'] ) );
+			}
+			if ( ! empty( $category_data['warnings'] ) ) {
+				$types = array_merge( $types, array_values( $category_data['warnings'] ) );
+			}
+
+			if ( ! empty( $types ) ) {
+				$category_name = 'ungrouped' === $group_id ? 'Misc Issues' : ucfirst( str_replace( '_', ' ', $group_id ) );
+				$categories[]  = [
+					'name'  => $category_name,
+					'types' => $types,
+				];
+			}
+		}
+
+		return [
+			'categories' => $categories,
 		];
 	}
 

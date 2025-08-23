@@ -26,6 +26,12 @@
     "wp-cli/scaffold-package-command": "^2",
     "wp-cli/wp-cli-tests": "^5"
   },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/ernilambar/classifier"
+    }
+  ],
   "minimum-stability": "dev",
   "prefer-stable": true,
   "autoload": {
@@ -36,12 +42,6 @@
       "command.php"
     ]
   },
-  	"repositories": [
-    {
-			"type": "vcs",
-			"url": "https://github.com/ernilambar/classifier"
-		}
-	],
   "config": {
     "allow-plugins": {
       "dealerdirect/phpcodesniffer-composer-installer": true,

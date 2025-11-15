@@ -78,6 +78,15 @@ class Report_Command {
 	private $classifier;
 
 	/**
+	 * Mode to run the checks in.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string
+	 */
+	private $mode;
+
+	/**
 	 * Constructor.
 	 *
 	 * @since 1.0.0
@@ -89,6 +98,7 @@ class Report_Command {
 		$this->custom_group_config_file = null;
 		$this->report_title             = 'Plugin Check Report';
 		$this->classifier               = null;
+		$this->mode                     = 'new';
 	}
 
 	/**
@@ -155,6 +165,15 @@ class Report_Command {
 	 * [--group-config=<group-config>]
 	 * : Path to custom group configuration JSON file for grouping plugin check issues.
 	 *
+	 * [--mode=<mode>]
+	 * : Mode to run the checks in. Options are 'new' (default) or 'update'.
+	 * ---
+	 * default: new
+	 * options:
+	 *   - new
+	 *   - update
+	 * ---
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     # Generate report.
@@ -198,6 +217,9 @@ class Report_Command {
 		$open_in_browser   = Utils\get_flag_value( $assoc_args, 'open', false );
 		$group_config_file = Utils\get_flag_value( $assoc_args, 'group-config', '' );
 		$custom_title      = Utils\get_flag_value( $assoc_args, 'report-title', null );
+		$mode              = Utils\get_flag_value( $assoc_args, 'mode', 'new' );
+
+		$this->mode = $mode;
 
 		if ( null !== $custom_title ) {
 			$this->report_title = $custom_title;

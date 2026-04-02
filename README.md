@@ -10,7 +10,7 @@ Quick links: [Using](#using) | [Installing](#installing)
 ## Using
 
 ~~~
-wp pcp-report <plugin> [--slug=<slug>] [--report-title=<title>] [--checks=<checks>] [--exclude-checks=<checks>] [--ignore-codes=<codes>] [--categories] [--ignore-warnings] [--ignore-errors] [--include-experimental] [--exclude-directories=<directories>] [--exclude-files=<files>] [--severity=<severity>] [--error-severity=<error-severity>] [--warning-severity=<warning-severity>] [--grouped] [--open] [--porcelain] [--group-config=<group-config>]
+wp pcp-report <plugin> [--slug=<slug>] [--report-title=<title>] [--checks=<checks>] [--exclude-checks=<checks>] [--ignore-codes=<codes>] [--categories] [--ignore-warnings] [--ignore-errors] [--include-experimental] [--exclude-directories=<directories>] [--exclude-files=<files>] [--severity=<severity>] [--error-severity=<error-severity>] [--warning-severity=<warning-severity>] [--grouped] [--open] [--porcelain] [--group-config=<group-config>] [--mode=<mode>]
 ~~~
 
 **OPTIONS**
@@ -74,6 +74,15 @@ wp pcp-report <plugin> [--slug=<slug>] [--report-title=<title>] [--checks=<check
 	[--group-config=<group-config>]
 		Path to custom group configuration JSON file for grouping plugin check issues.
 
+	[--mode=<mode>]
+		Mode to run the checks in. Options are 'new' (default) or 'update'.
+		---
+		default: new
+		options:
+		  - new
+		  - update
+		---
+
 **EXAMPLES**
 
     # Generate report.
@@ -90,7 +99,7 @@ wp pcp-report <plugin> [--slug=<slug>] [--report-title=<title>] [--checks=<check
 
 ## Installing
 
-Installing this package requires WP-CLI v2.12 or greater. Update to the latest stable release with `wp cli update`.
+Installing this package requires WP-CLI v2.13 or greater. Update to the latest stable release with `wp cli update`.
 
 Once you've done so, you can install the latest stable version of this package with:
 

@@ -17,13 +17,13 @@
   },
   "require": {
     "php": ">=7.4",
-    "ernilambar/classifier": "^1"
+    "ernilambar/classifier": "^1",
+    "wp-cli/wp-cli": "^2.13"
   },
   "require-dev": {
-    "slevomat/coding-standard": "^8.15",
-    "wp-cli/extension-command": "^2.1",
+    "slevomat/coding-standard": "^8",
+    "wp-cli/extension-command": "^2",
     "wp-cli/scaffold-package-command": "^2",
-    "wp-cli/wp-cli": "^2.12",
     "wp-cli/wp-cli-tests": "^5"
   },
   "repositories": [
@@ -77,7 +77,7 @@
     "phpcs": "run-phpcs-tests",
     "phpstan": "run-phpstan-tests",
     "phpunit": "run-php-unit-tests",
-    "prepare-behat-tests": "install-package-tests",
+    "prepare-tests": "install-package-tests",
     "readme": "./vendor/bin/wp scaffold package-readme . --force --branch=main",
     "test": [
       "@lint",

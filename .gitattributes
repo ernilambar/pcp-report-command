@@ -1,0 +1,12 @@
+/.claude export-ignore
+/.distignore export-ignore
+/.editorconfig export-ignore
+/.gherkin-lintrc export-ignore
+/.gitattributes export-ignore
+/.github export-ignore
+/.gitignore export-ignore
+/behat.yml export-ignore
+/CLAUDE.md export-ignore
+/features export-ignore
+/phpcs.xml.dist export-ignore
+/tests export-ignore

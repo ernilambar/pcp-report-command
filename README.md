@@ -10,7 +10,7 @@ Quick links: [Using](#using) | [Installing](#installing)
 ## Using
 
 ~~~
-wp pcp-report <plugin> [--slug=<slug>] [--report-title=<title>] [--checks=<checks>] [--exclude-checks=<checks>] [--ignore-codes=<codes>] [--categories] [--ignore-warnings] [--ignore-errors] [--include-experimental] [--exclude-directories=<directories>] [--exclude-files=<files>] [--severity=<severity>] [--error-severity=<error-severity>] [--warning-severity=<warning-severity>] [--grouped] [--open] [--porcelain] [--group-config=<group-config>] [--mode=<mode>]
+wp pcp-report <plugin> [--slug=<slug>] [--report-title=<title>] [--checks=<checks>] [--exclude-checks=<checks>] [--ignore-codes=<codes>] [--categories] [--ignore-warnings] [--ignore-errors] [--include-experimental] [--exclude-directories=<directories>] [--exclude-files=<files>] [--severity=<severity>] [--error-severity=<error-severity>] [--warning-severity=<warning-severity>] [--include-low-severity-errors] [--include-low-severity-warnings] [--ai] [--ai-model=<model>] [--grouped] [--open] [--porcelain] [--group-config=<group-config>] [--mode=<mode>]
 ~~~
 
 **OPTIONS**
@@ -61,6 +61,18 @@ wp pcp-report <plugin> [--slug=<slug>] [--report-title=<title>] [--checks=<check
 
 	[--warning-severity=<warning-severity>]
 		Warning severity level.
+
+	[--include-low-severity-errors]
+		Include errors with lower severity than the threshold as other type.
+
+	[--include-low-severity-warnings]
+		Include warnings with lower severity than the threshold as other type.
+
+	[--ai]
+		Enable AI-based analysis to detect false positives in check results.
+
+	[--ai-model=<model>]
+		AI model preference for analysis (e.g., 'openai::gpt-4o'). Requires --ai.
 
 	[--grouped]
 		Display report in grouped format.

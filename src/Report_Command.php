@@ -153,6 +153,18 @@ class Report_Command {
 	 * [--warning-severity=<warning-severity>]
 	 * : Warning severity level.
 	 *
+	 * [--include-low-severity-errors]
+	 * : Include errors with lower severity than the threshold as other type.
+	 *
+	 * [--include-low-severity-warnings]
+	 * : Include warnings with lower severity than the threshold as other type.
+	 *
+	 * [--ai]
+	 * : Enable AI-based analysis to detect false positives in check results.
+	 *
+	 * [--ai-model=<model>]
+	 * : AI model preference for analysis (e.g., 'openai::gpt-4o'). Requires --ai.
+	 *
 	 * [--grouped]
 	 * : Display report in grouped format.
 	 *
@@ -202,6 +214,9 @@ class Report_Command {
 			'ignore-warnings',
 			'ignore-errors',
 			'include-experimental',
+			'include-low-severity-errors',
+			'include-low-severity-warnings',
+			'ai',
 			'grouped',
 		];
 

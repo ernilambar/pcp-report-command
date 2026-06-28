@@ -1,5 +1,4 @@
 .DS_Store
-wp-cli.local.yml
 node_modules/
 vendor/
 reports/
@@ -13,3 +12,9 @@ composer.lock
 phpunit.xml
 phpcs.xml
 .phpcs.xml
+.env
+.env.*
+!.env.example
+*.local
+*.local.*
+

@@ -37,7 +37,7 @@ class Report_Command {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @var string
+	 * @var string|false
 	 */
 	private $reports_folder;
 
@@ -78,15 +78,6 @@ class Report_Command {
 	private $classifier;
 
 	/**
-	 * Mode to run the checks in.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @var string
-	 */
-	private $mode;
-
-	/**
 	 * Constructor.
 	 *
 	 * @since 1.0.0
@@ -98,7 +89,6 @@ class Report_Command {
 		$this->custom_group_config_file = null;
 		$this->report_title             = 'Plugin Check Report';
 		$this->classifier               = null;
-		$this->mode                     = 'new';
 	}
 
 	/**
@@ -200,11 +190,14 @@ class Report_Command {
 	 *     # Get report path only.
 	 *     $ wp pcp-report hello-dolly --porcelain
 	 *
-	 * @param array $args       Indexed array of positional arguments.
-	 * @param array $assoc_args Associative array of options.
+	 * @since 1.0.0
+	 *
+	 * @param array<int, mixed>     $args       Indexed array of positional arguments.
+	 * @param array<string, mixed>  $assoc_args Associative array of options.
+	 * @return void
 	 */
-	public function __invoke( $args, $assoc_args = [] ) {
-		$plugin_slug = isset( $args[0] ) ? $args[0] : '';
+	public function __invoke( array $args, array $assoc_args = [] ): void {
+		$plugin_slug = isset( $args[0] ) && is_string( $args[0] ) ? $args[0] : '';
 
 		if ( ! defined( 'WP_PLUGIN_CHECK_VERSION' ) ) {
 			WP_CLI::error( 'Plugin Check is not installed/activated.' );
@@ -227,14 +220,18 @@ class Report_Command {
 			'fields' => 'file,line,column,type,code,message,docs',
 		];
 
-		$porcelain_mode    = Utils\get_flag_value( $assoc_args, 'porcelain', false );
-		$grouped_mode      = Utils\get_flag_value( $assoc_args, 'grouped', false );
-		$open_in_browser   = Utils\get_flag_value( $assoc_args, 'open', false );
+		$porcelain_mode    = true === Utils\get_flag_value( $assoc_args, 'porcelain', false );
+		$grouped_mode      = true === Utils\get_flag_value( $assoc_args, 'grouped', false );
+		$open_in_browser   = true === Utils\get_flag_value( $assoc_args, 'open', false );
 		$group_config_file = Utils\get_flag_value( $assoc_args, 'group-config', '' );
 		$custom_title      = Utils\get_flag_value( $assoc_args, 'report-title', null );
 		$mode              = Utils\get_flag_value( $assoc_args, 'mode', 'new' );
 
-		$this->mode = $mode;
+		$group_config_file = is_string( $group_config_file ) ? $group_config_file : '';
+		$custom_title      = is_string( $custom_title ) ? $custom_title : null;
+		$mode              = is_string( $mode ) ? $mode : 'new';
+
+		$check_args['mode'] = $mode;
 
 		if ( null !== $custom_title ) {
 			$this->report_title = $custom_title;
@@ -268,7 +265,7 @@ class Report_Command {
 		foreach ( $check_args as $key => $val ) {
 			if ( in_array( $key, $flags, true ) ) {
 				$command_text .= " --{$key}";
-			} else {
+			} elseif ( is_scalar( $val ) ) {
 				$command_text .= " --{$key}={$val}";
 			}
 		}
@@ -308,8 +305,9 @@ class Report_Command {
 
 		$target_file_name = '';
 
-		if ( Utils\get_flag_value( $assoc_args, 'slug', null ) ) {
-			$target_file_name = Utils\get_flag_value( $assoc_args, 'slug', null );
+		$custom_slug = Utils\get_flag_value( $assoc_args, 'slug', null );
+		if ( is_string( $custom_slug ) && '' !== $custom_slug ) {
+			$target_file_name = $custom_slug;
 		}
 
 		if ( empty( $target_file_name ) ) {
@@ -342,7 +340,7 @@ class Report_Command {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return array Array of group definitions.
+	 * @return array<string, mixed> Array of group definitions.
 	 */
 	public function get_group_info(): array {
 		// If we don't have a classifier yet, create one for the default config.
@@ -390,7 +388,7 @@ class Report_Command {
 	 *
 	 * @param string $json_data JSON string containing plugin check results.
 	 * @param bool   $grouped   Whether to group the data.
-	 * @return array Prepared data array for template rendering.
+	 * @return array<string, mixed> Prepared data array for template rendering.
 	 */
 	private function prepare_data( string $json_data, bool $grouped = false ): array {
 		$data = [];
@@ -401,18 +399,14 @@ class Report_Command {
 		}
 
 		$issues = json_decode( $json_data, true );
-		if ( empty( $issues ) ) {
+		if ( ! is_array( $issues ) || empty( $issues ) ) {
 			return $data;
 		}
 
-		// Remove /private prefix from file paths on macOS for all issues.
-		$issues = array_map(
-			function ( $issue ) {
-				$issue['file'] = ltrim( preg_replace( '|^/private|', '', $issue['file'] ), '/' );
-				return $issue;
-			},
-			$issues
-		);
+		$issues = $this->normalize_issues( $issues );
+		if ( empty( $issues ) ) {
+			return $data;
+		}
 
 		// Prepare data based on mode.
 		if ( $grouped ) {
@@ -426,12 +420,42 @@ class Report_Command {
 	}
 
 	/**
+	 * Normalizes decoded Plugin Check issues.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array<mixed> $issues Decoded issue data.
+	 * @return array<int, array<string, mixed>> Normalized issues.
+	 */
+	private function normalize_issues( array $issues ): array {
+		$normalized_issues = [];
+
+		foreach ( $issues as $issue ) {
+			if ( ! is_array( $issue ) || ! isset( $issue['file'] ) || ! is_string( $issue['file'] ) ) {
+				continue;
+			}
+
+			$normalized_issue = [];
+			foreach ( $issue as $key => $value ) {
+				if ( is_string( $key ) ) {
+					$normalized_issue[ $key ] = $value;
+				}
+			}
+
+			$normalized_issue['file'] = ltrim( preg_replace( '|^/private|', '', $issue['file'] ) ?? '', '/' );
+			$normalized_issues[]      = $normalized_issue;
+		}
+
+		return $normalized_issues;
+	}
+
+	/**
 	 * Prepares simple data for default template rendering.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array $issues Array of issues from plugin check.
-	 * @return array Prepared simple data array for template rendering.
+	 * @param array<int, array<string, mixed>> $issues Array of issues from plugin check.
+	 * @return array<string, mixed> Prepared simple data array for template rendering.
 	 */
 	private function prepare_simple_data( array $issues ): array {
 		return [
@@ -445,7 +469,7 @@ class Report_Command {
 						'line'         => $issue['line'],
 						'column'       => $issue['column'],
 						'has_location' => ( $issue['line'] > 0 ),
-						'message'      => Template_Utils::format_message( $issue['message'] ),
+						'message'      => Template_Utils::format_message( is_string( $issue['message'] ?? null ) ? $issue['message'] : '' ),
 						'docs'         => $issue['docs'] ?? null,
 					];
 				},
@@ -459,8 +483,8 @@ class Report_Command {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array $issues Array of issues from plugin check.
-	 * @return array Prepared grouped data array for template rendering.
+	 * @param array<int, array<string, mixed>> $issues Array of issues from plugin check.
+	 * @return array<string, mixed> Prepared grouped data array for template rendering.
 	 */
 	private function prepare_grouped_data( array $issues ): array {
 		if ( null === $this->classifier ) {
@@ -561,7 +585,7 @@ class Report_Command {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array  $data Template data array.
+	 * @param array<string, mixed> $data Template data array.
 	 * @param string $type Template type.
 	 * @return string Generated HTML content.
 	 */
@@ -589,7 +613,7 @@ class Report_Command {
 
 				if ( $path ) {
 					$filename = basename( $path );
-					$slug     = preg_replace( '/\.\d+(\.\d+)*\.zip$/', '', $filename );
+					$slug     = preg_replace( '/\.\d+(\.\d+)*\.zip$/', '', $filename ) ?? '';
 				}
 			} elseif ( false !== strpos( $slug, '#wporgapi' ) ) {
 				// Special URLs with #wporgapi.
@@ -597,15 +621,15 @@ class Report_Command {
 
 				if ( $path ) {
 					$filename = basename( $path );
-					$slug     = preg_replace( '/^\d+_\d+-\d+-\d+_/', '', $filename );
-					$slug     = preg_replace( '/\.zip$/', '', $slug );
+					$slug     = preg_replace( '/^\d+_\d+-\d+-\d+_/', '', $filename ) ?? '';
+					$slug     = preg_replace( '/\.zip$/', '', $slug ) ?? '';
 				}
 			} elseif ( false !== strpos( $slug, '.zip' ) ) {
 				$path = wp_parse_url( $slug, PHP_URL_PATH );
 
 				if ( $path ) {
 					$filename = basename( $path );
-					$slug     = preg_replace( '/\.zip$/', '', $filename );
+					$slug     = preg_replace( '/\.zip$/', '', $filename ) ?? '';
 				}
 			}
 		} elseif ( false !== strpos( $slug, '/' ) ) {
@@ -623,7 +647,7 @@ class Report_Command {
 	 *
 	 * @param string $url URL.
 	 */
-	public static function open_in_browser( $url ) {
+	public static function open_in_browser( string $url ): void {
 		switch ( strtoupper( substr( PHP_OS, 0, 3 ) ) ) {
 			case 'DAR':
 				$exec = 'open';

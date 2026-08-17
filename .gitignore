@@ -1,20 +1,43 @@
+# Operating System files
+._*
 .DS_Store
-node_modules/
-vendor/
-reports/
-*.cache
-*.zip
-*.tar.gz
-*.swp
-*.txt
-*.log
-composer.lock
-phpunit.xml
-phpcs.xml
-.phpcs.xml
+.Spotlight-V100
+.Trashes
+.Trash-*
+Desktop.ini
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/*
+*.sublime-project
+*.sublime-workspace
+
+# Environment files
 .env
 .env.*
 !.env.example
 *.local
 *.local.*
 
+# Ignored extensions
+*.bak
+*.cache
+*.diff
+*.err
+*.log
+*.log.*
+*.map
+*.orig
+*.pyc
+*.rej
+*.sw?
+*.tmp
+*.zip
+*~
+
+# Project folders
+/build/
+/deploy/
+/node_modules/
+/vendor/

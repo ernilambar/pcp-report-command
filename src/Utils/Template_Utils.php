@@ -24,7 +24,7 @@ class Template_Utils {
 	 * @since 1.0.0
 	 *
 	 * @param string $template_path Full path to the template file.
-	 * @param array  $data          Data to make available in the template.
+	 * @param array<string, mixed> $data          Data to make available in the template.
 	 * @return string Rendered template content.
 	 */
 	public static function render( string $template_path, array $data = [] ): string {
@@ -39,7 +39,7 @@ class Template_Utils {
 		self::render_template( $template_path, $data );
 
 		// Get the buffered content and clean the buffer.
-		return ob_get_clean();
+		return ob_get_clean() ?: '';
 	}
 
 	/**
@@ -48,7 +48,7 @@ class Template_Utils {
 	 * @since 1.0.0
 	 *
 	 * @param string $template_path Full path to the template file.
-	 * @param array  $data          Data array.
+	 * @param array<string, mixed> $data          Data array.
 	 */
 	private static function render_template( string $template_path, array $data ): void {
 		$title      = $data['title'] ?? '';
@@ -74,6 +74,6 @@ class Template_Utils {
 		// Convert backticks to pre/code tags only at the end of the message.
 		$formatted_message = preg_replace( '/`([^`]+)`$/', '<pre><code>$1</code></pre>', $escaped_message );
 
-		return $formatted_message;
+		return $formatted_message ?? $escaped_message;
 	}
 }

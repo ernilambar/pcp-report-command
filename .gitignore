@@ -36,6 +36,9 @@ Thumbs.db
 *.zip
 *~
 
+# Project files
+composer.lock
+
 # Project folders
 /build/
 /deploy/

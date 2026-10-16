@@ -7,11 +7,17 @@ on:
       - main
     paths:
       - '**.feature'
+      - '.gherkin-lintrc'
+      - '.github/gherkin-lint/**'
+      - '.github/workflows/lint-gherkin.yml'
   pull_request:
     branches:
       - main
     paths:
       - '**.feature'
+      - '.gherkin-lintrc'
+      - '.github/gherkin-lint/**'
+      - '.github/workflows/lint-gherkin.yml'
     types:
       - opened
       - reopened
@@ -32,5 +38,8 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
 
+      - name: Install Gherkin Refine
+        run: npm ci --prefix .github/gherkin-lint --ignore-scripts --no-fund
+
       - name: Run lint
-        run: npx --yes gherkin-lint
+        run: .github/gherkin-lint/node_modules/.bin/gherkin-lint features
